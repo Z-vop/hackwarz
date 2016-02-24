@@ -1,23 +1,18 @@
 {
   "name": "hackwarz",
-  "version": "1.0.0",
-  "description": "A challenging and minimalistic game where participants try to out-hack other corporations.",
-  "main": "hack.js",
+  "version": "0.0.0",
+  "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node ./bin/www"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Z-vop/hackwarz.git"
-  },
-  "author": "Oliver O'Rourke",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/Z-vop/hackwarz/issues"
-  },
-  "homepage": "https://github.com/Z-vop/hackwarz#readme",
   "dependencies": {
-    "express": "^4.13.4",
+    "body-parser": "~1.13.2",
+    "cookie-parser": "~1.3.5",
+    "debug": "~2.2.0",
+    "express": "~4.13.1",
+    "jade": "~1.11.0",
+    "morgan": "~1.6.1",
+    "serve-favicon": "~2.3.0",
     "socket.io": "^1.4.5"
   }
 }

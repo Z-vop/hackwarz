@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+</head>
+<body>
+<div id="server_feed">
+    <label for="output_box">Server Feed</label><br />
+    <textarea id="output_box" rows=10 cols="40"></textarea>
+</div>
+<div id="command_box">
+    <label for="input_box">Command Box</label><br/>
+<form id="input_form" action="" method="post">
+    <input id="input_box" type="text" size="40"/>
+</form>
+</div>
+<span id="alert_text"></span>
+
+
+<script>
+    $( document ).ready(function() {
+        $( '#input_box' ).focus();
+    });
+
+    $( '#input_form' ).submit(function( event ) {
+        var message = $('#input_box').val();
+        $("#output_box").append(message + "\n");
+        $("#input_box").val("");
+        $('#alert_text').html("Alert!").show().fadeOut(1000);
+        event.preventDefault();
+    });
+</script>
+
+</body>
+</html>

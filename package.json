@@ -1,8 +1,12 @@
 {
   "name": "hackwarz",
   "version": "1.0.0",
-  "description": "A challenging and minimalistic game where participants try to out-hack other corporations.",
-  "main": "hack.js",
+  "description": "A hacking game.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

@@ -16,6 +16,9 @@ io.on('connection', function(socket){
         console.log('user disconnected');
     });
     socket.on('chat_message', function(msg){
+        if(msg == "/score") {
+            io.emit('score', 123);
+        }
         console.log('message: ' + msg);
         io.emit('chat_message', msg);
     });

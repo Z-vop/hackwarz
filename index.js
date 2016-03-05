@@ -11,16 +11,16 @@ app.get('/', function(req, res){
 });
 
 io.on('connection', function(socket){
-    console.log('a user connected');
+    console.log('A user connected. Socket #' + socket.id);
     socket.on('disconnect', function(){
-        console.log('user disconnected');
+        console.log('A user disconnected. Socket #' + socket.id);
     });
     socket.on('chat_message', function(msg){
         if(msg == "/score") {
             io.emit('score', 123);
         }
         console.log('message: ' + msg);
-        io.emit('chat_message', msg);
+        io.emit('chat_message', socket.id + ': ' + msg);
     });
 });
 

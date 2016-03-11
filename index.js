@@ -20,42 +20,36 @@ app.get('/', function(req, res){
 
 io.on('connection', function(socket){
 
+    // A new user has connected
     var username = "";
-
+    var score = 0; // The gamer's score
+    var budget = 0; // The gamer's 'security budget'
     console.log('A user connected. Socket #' + socket.id);
-
     socket.emit('chat_message', 'SYSTEM: Welcome to Mega Corp. Please login using /user [name]');
 
     socket.on('disconnect', function(){
-
-
-
-        if (username == "") {
-            console.log('A user disconnected. Socket #' + socket.id);
-        } else{
-            console.log('A user disconnected. Socket #' + username);
-        }
+        console.log('User disconnected: ' + (username =="" ? socket.id : username);
     });
 
-
     socket.on('chat_message', function(msg){
+        // Don't allow user to continue until they identify themselves
         if(username == "" && msg.startsWith("/name") == false) {
             socket.emit("chat_message", "SYSTEM: Please login.");
             return;
-
         }
 
         // is the message a command?
         if(msg.startsWith('/')) {
             // is it the /name command?
-            // The strong will be: /name username
-            if(msg.startsWith('/name')) {
+            // The string will be: /name username
+            if(msg.startsWith('/name ')) {
                 username = (msg.substring(msg.indexOf(" ")));
                 socket.emit('chat_message', "SYSTEM: Login successful.");
             }
             // Is it the /score command?
+            // TODO: Don't require a score command -- just update the score periodically
             if(msg == "/score") {
-                io.emit('score', 123);
+                io.emit('score', score);
             }
 
             if (msg.startsWith('/color')){
@@ -75,8 +69,7 @@ io.on('connection', function(socket){
             }
 
         } else {
-            //Its not a command, just send out the message
-            console.log(username + "'s " +'message: ' + msg);
+            //Its not a command, just send out the message to everyone
             io.emit('chat_message', username + ': ' + msg);
         }
 

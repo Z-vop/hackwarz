@@ -20,6 +20,8 @@ app.get('/', function(req, res){
 
 io.on('connection', function(socket){
 
+    var folder = "hacks, firewall, money";
+
     var username = "";
 
     console.log('A user connected. Socket #' + socket.id);
@@ -39,19 +41,25 @@ io.on('connection', function(socket){
 
 
     socket.on('chat_message', function(msg){
+
+
+
         if(username == "" && msg.startsWith("/name") == false) {
             socket.emit("chat_message", "SYSTEM: Please login.");
             return;
 
         }
 
+
+
         // is the message a command?
         if(msg.startsWith('/')) {
             // is it the /name command?
             // The strong will be: /name username
-            if(msg.startsWith('/name')) {
+            if(msg.startsWith('/name ')) {
                 username = (msg.substring(msg.indexOf(" ")));
                 socket.emit('chat_message', "SYSTEM: Login successful.");
+
             }
             // Is it the /score command?
             if(msg == "/score") {
@@ -63,13 +71,14 @@ io.on('connection', function(socket){
             }
 
             if(msg.startsWith('/help')) {
-                io.emit('chat_message', "Staff Help" + ': ' + "1) /name:" +
+                socket.emit('chat_message', "Staff Help" + ': ' + "1) /name:" +
                     " assign your name after typing /name ");
-                io.emit('chat_message', "Staff Help" + ': ' + "2)/score:" +
+                socket.emit('chat_message', "Staff Help" + ': ' + "2)/score:" +
                     " type /score and hit return to get your score");
             }
 
-            if(msg.startsWith('/admin')){
+            if(msg.startsWith('/folder')){
+                socket.emit('chat_message', username + "'s" + "folder" + folder);
 
 
             }

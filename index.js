@@ -1,6 +1,3 @@
-/**
- * Created by cameron on 3/5/16.
- */
 
 var app = require('express')();
 var http = require('http').Server(app);
@@ -27,8 +24,13 @@ io.on('connection', function(socket){
     console.log('A user connected. Socket #' + socket.id);
     socket.emit('chat_message', 'SYSTEM: Welcome to Mega Corp. Please login using /user [name]');
 
+    setInterval(function() {
+        score += 10;
+        socket.emit('score', score);
+    }, 1000);
+
     socket.on('disconnect', function(){
-        console.log('User disconnected: ' + (username =="" ? socket.id : username);
+        console.log('User disconnected: ' + (username == "" ? socket.id : username));
     });
 
     socket.on('chat_message', function(msg){

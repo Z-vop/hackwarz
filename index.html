@@ -11,11 +11,12 @@
         form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; background-color: #006600}
         #messages { list-style-type: none; margin: 0; padding: 0; }
         #messages li { padding: 5px 10px; }
-        #messages li:nth-child(odd) { background: #eee; }
     </style>
 </head>
-<body style="background-color:darkgreen">
-Score: <label id="score"></label><br />
+<body>
+Level: <label id="level"></label><br />
+Bitcoins: <label id="bitcoins"></label><br />
+
 <ul id="messages"></ul>
 <form action="">
     <input id="m" autocomplete="off" /><button>Send</button>
@@ -32,8 +33,11 @@ Score: <label id="score"></label><br />
     socket.on('chat_message', function(msg){
         $('#messages').append($('<li>').text(msg));
     });
-    socket.on('score', function(msg) {
-        $('#score').text(msg);
+    socket.on('level', function(msg) {
+        $('#level').text(msg);
+    });
+    socket.on('bitcoins', function(msg) {
+        $('#bitcoins').text(msg);
     });
 </script>
 </body>

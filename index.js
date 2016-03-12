@@ -7,7 +7,7 @@ var io = require('socket.io')(http);
 
 var usermap = new Map();
 
-var password = "minty33"
+var password = "minty33";
 
 app.get('/', function(req, res){
     res.sendFile(__dirname + '/index.html');

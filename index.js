@@ -52,9 +52,16 @@ io.on('connection', function(socket){
 
         // Don't allow user to continue until they identify themselves
         if(user.name == "") {
+
             // But also don't allow use of /name command after login
             if (msg.startsWith('/name ') || msg.startsWith('/user ')) {
                 var u = (msg.substring(msg.indexOf(" ")+1));
+                var patt = /[a-z][0-9]/;
+                if(!patt.test(u)) {
+                    socket.emit('error_message', "invalid name request");
+                    return;
+                }
+
                 // Look up user in db, if found set the user object
                 db.find({name: u}, function(err, docs) {
                     console.log(docs);

@@ -12,8 +12,14 @@
         #messages { list-style-type: none; margin: 0; padding: 0; }
         #messages li { padding: 5px 10px; }
         #messages {color:green;}
+
+        #error { list-style-type: none; margin: 0; padding: 0; }
+        #error li { padding: 5px 10px; }
+        #error {color:red;}
+
         #level_box { color: yellow; margin: 3;}
         #coin_box { color: orange; margin: 3;}
+        .chat_error { color:red; }
     </style>
 </head>
 <body style="background-color:black">
@@ -21,6 +27,7 @@
 <div id="coin_box">Bitcoins: <label id="bitcoins"></label></div>
 
 <ul id="messages"></ul>
+
 <form action="">
     <input id="m" autocomplete="off" /><button>Send</button>
 </form>
@@ -33,12 +40,19 @@
         $('#m').val('');
         return false;
     });
+
+    socket.on('error_message', function(msg){
+        $('#messages').append($('<li class="chat_error">').text(msg));
+    });
+
     socket.on('chat_message', function(msg){
         $('#messages').append($('<li>').text(msg));
     });
+
     socket.on('level', function(msg) {
         $('#level').text(msg);
     });
+
     socket.on('bitcoins', function(msg) {
         $('#bitcoins').text(msg);
     });

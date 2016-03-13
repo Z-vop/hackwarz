@@ -20,7 +20,7 @@ io.on('connection', function(socket){
         name: "",
         password: "",
         level: 0,
-        bitcoins: 0
+        bitcoins: 0.0
     };
 
     console.log('A user connected. Socket #' + socket.id);
@@ -28,7 +28,7 @@ io.on('connection', function(socket){
 
     // Repeating function to count money, etc.
     setInterval(function() {
-        user.bitcoins += user.level*10;
+        user.bitcoins += (1.8^user.level)/100;
         socket.emit('bitcoins', user.bitcoins);
         socket.emit('level', user.level);
     }, 1000);
@@ -42,9 +42,7 @@ io.on('connection', function(socket){
                 db.update({_id: user._id}, user, {}, function(err, numReplaced){} );
             } else {
                 console.log("Writing user info to DB");
-                db.insert(user, function (err, newDoc) {
-                    console.log("DB insert: " + err);
-                });
+                db.insert(user, function (err, newDoc) {});
             }
         }
         console.log('User disconnected: ' + (user.name == "" ? socket.id : user.name));

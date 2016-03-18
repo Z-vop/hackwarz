@@ -10,8 +10,6 @@ app.get('/', function(req, res){
     res.sendFile(__dirname + '/index.html');
 });
 
-var mission = 0;
-
 
 
 io.on('connection', function(socket){
@@ -20,32 +18,60 @@ io.on('connection', function(socket){
         socket.emit('chat_message', text);
     }
 
-
-
-    // A new user has connected
-    var folder = "hacks, firewall, money";
+    // This is the user object.
     user = {
         name: "",
         password: "",
         level: 0,
-        bitcoins: 0.0
+        bitcoins: 0.0,
+        mission: -1,     // -1 Means no mission
+        mission_prompt: 0
     };
 
+    // A new user has connected
     console.log('A user connected. Socket #' + socket.id);
-    socket.emit('chat_message', 'SYSTEM: Welcome to the DeepWeb Network. Please login using /user [name]');
+    write("SYSTEM: Welcome to the DeepWeb Network. Please login using /user [name]");
+
 
     // Repeating function to count money, etc.
     setInterval(function() {
-        /* Update bitcoins, user level */
-        user.bitcoins += (1.8^user.level)/100;
-        socket.emit('bitcoins', user.bitcoins);
-        socket.emit('level', user.level);
+        if(user.level > 0) {
+            // Update bitcoins, and update the UI with coins and the user level
+            user.bitcoins += (1.8 ^ user.level) / 100;
+            socket.emit('bitcoins', user.bitcoins);
+            socket.emit('level', user.level);
+        }
 
-        /* Check missions */
-        if (mission == 2) {
-            mission++;
-            write("Well?? Get going already!!");
+        // Check all missions, and put user on mission if condition met
+        if(user.mission == -1 ) {   // If the user is not currently on a mission
+            // Check all missions for trigger conditions
+            for(i = 0; i < missions.length; i++) {
+                if(missions[i].trigger()) {         // If we hit a trigger condition
+                    if (!missions[i].test()) {      // Check to be sure test hasn't already been satisfied
+                        user.mission = i;           // Set the current user mission
+                        user.mission_prompt = 0;
+                        break;
+                    }
+                }
+            }
         };
+
+        // If user is on a mission, check if test condition passed, otherwise do the prompts
+        if (user.mission != -1) {   // User is on a mission
+            var mission = missions[user.mission];
+            // check the test condition to see if we are done
+            if(mission.test()) {
+                console.log("test condition passed");
+                user.mission = -1;
+                mission.completion();
+            } else {
+                // We are in a mission, output the next prompt
+                if(user.mission_prompt < mission.prompts.length) {
+                    socket.emit("chat_message", mission.prompts[user.mission_prompt]);
+                    user.mission_prompt++;
+                }
+            }
+        }
     }, 1000);
 
     // Save the user information
@@ -85,13 +111,11 @@ io.on('connection', function(socket){
                         // TODO: don't use docs.count its a hack
                         user = docs[docs.length - 1];
                         socket.emit('chat_message', "SYSTEM: Welcome back.");
-                        mission++;
                     } else {
                         /* A new user name */
                         console.log("No user found in DB");
                         user.name = u;
                         user.level++;
-                        mission++;
                     }
                 }); // end db.find
                 socket.emit('chat_message', "SYSTEM: Login successful.");
@@ -105,31 +129,26 @@ io.on('connection', function(socket){
         // is the message a command?
         if(msg.startsWith('/')) {
 
-            if (msg.startsWith('/color')){
-
+            if (msg.startsWith('/password ')){
+                var pw = (msg.substring(msg.indexOf(" ")+1));
+                user.password = pw;
             }
 
-            if(msg.startsWith('/help')) {
-                socket.emit('chat_message', "Staff Help" + ': ' + "1) /name:" +
-                    " assign your name after typing /name ");
+            if(msg.startsWith('/mission')) {
+                if(user.mission == -1) {
+                    socket.emit("chat_message", "SYSTEM: You are not on a mission.");
+                } else {
+                    socket.emit("chat_message", "SYSTEM: " + missions[user.mission].description);
+                }
             }
 
-            if(msg.startsWith('/folder')){
-                socket.emit('chat_message', username + "'s" + "folder" + folder);
-
-            }
 
         } else {
             //Its not a command, just send out the message to everyone
             socket.emit('chat_message', user.name + ': ' + msg);
         }
+/*
 
-        if (mission == 1){
-            mission++;
-
-            setTimeout(write("Incoming Message from: unknown"),1500)
-
-            setTimeout(mission2text, 2000);
 
             function mission2text(){
                 write("Message: " +
@@ -145,13 +164,34 @@ io.on('connection', function(socket){
 
                 }
             }
-
-
-        }
+*/
     });
 });
 
 http.listen(3000, function(){
     console.log('listening on *:3000');
 });
+
+
+var missions = [
+    {   description: "You should protect your account with a password.",
+        trigger: function() { return user.level == 1; },
+        test: function() { return user.password != ''; },
+        completion: function() { user.level = 2; },
+        prompts: [
+            "Jake: Hey, this is Jake. Welcome to the Network.",
+            "Jake: You should set a password before you do anything else."
+        ]
+    },
+    {   description: "Save up at least 20 bitcoins to buy a terminal interface.",
+        trigger: function() { return user.level == 2; },
+        test: function() { return user.bitcoins > 20; },
+        completion: function() {
+        },
+        prompts: [
+            "Jake: Hey, this is Jake again. Try to save 20 bitcoins so you can buy a terminal interface.",
+            "Jake: You need a terminal interface to do any real hacking."
+            ]
+    }
+];
 

@@ -5,62 +5,71 @@
     <title>HackWarz Test Page</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font: 13px Courier,Monoco ; }
-        form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
-        form input {]border:green; border-style:solid; border-width:12px; background-color:#333333; color:green; border: 0; padding: 10px; width: 90%; margin-right: .5%; }
-        form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; background-color: #006600}
-        #messages { list-style-type: none; margin: 0; padding: 0; }
-        #messages li { padding: 5px 10px; }
-        #messages {color:green;}
+        body { font: 13px Courier, Monoco; background-color: black; }
+        div#content { height: "100%";}
 
-        #error { list-style-type: none; margin: 0; padding: 0; }
-        #error li { padding: 5px 10px; }
-        #error {color:red;}
+        div#header { background-color: #222; padding-top: 5px; padding-left: 5px; padding-bottom: 20px }
+        #header div { float: left; padding-left: 10px; padding-right: 10px; }
+        #header p { color: white; float: left; }
+        div#level_box { color: yellow; margin: 3; }
+        div#coin_box { color: orange; margin: 3; }
 
-        #level_box { color: yellow; margin: 3;}
-        #coin_box { color: orange; margin: 3;}
-        .chat_error { color:red; }
+        div#messages { background-color: #444; overflow-y: scroll; height: 100%}
+        #messages p { color: #3F3; padding: 5px 10px; }
+        #messages p.chat_error { color: #F00; }
+
+        form { padding: 2px; position: fixed; bottom: 0; width: 100%; }
+        form input { font: 13px Courier; background-color: #333333; color: green; border: 0; padding: 8px; width: 90%; margin-right: .5%; }
+        form button { width: 8%; border: none; padding: 10px; background-color: #006600 }
     </style>
 </head>
-<body style="background-color:black">
-<div id="level_box">Level: <label id="level"></label></div>
-<div id="coin_box">Bitcoins: <label id="bitcoins"></label></div>
+<body>
 
-<ul id="messages"></ul>
+    <div id="header"><p>Hackwarz!</p>
+        <div id="level_box">Level: <label id="level"></label></div>
+        <div id="coin_box">Bitcoins: <label id="bitcoins"></label></div>
+    </div>
 
-<form action="">
-    <input id="m" autocomplete="off" /><button>Send</button>
-</form>
+    <div id="messages">
+    </div>
+
+    <form action="">
+        <input id="m" autocomplete="off"/>
+        <button>Send</button>
+    </form>
+
+
 <script src="/socket.io/socket.io.js"></script>
 <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
 <script>
     var socket = io();
-    $('form').submit(function(){
+    $('form').submit(function () {
         socket.emit('chat_message', $('#m').val());
         $('#m').val('');
         return false;
     });
 
-    socket.on('error_message', function(msg){
-        $('#messages').append($('<li class="chat_error">').text(msg));
+    socket.on('error_message', function (msg) {
+        $('#messages').append($('<p class="chat_error"></p>').text(msg));
     });
 
-    socket.on('chat_message', function(msg){
-        $('#messages').append($('<li>').text(msg));
+    socket.on('chat_message', function (msg) {
+        $('#messages').append($('<p></p>').text(msg));
     });
 
-    socket.on('level', function(msg) {
+    socket.on('level', function (msg) {
         $('#level').text(msg);
     });
 
-    socket.on('bitcoins', function(msg) {
+    socket.on('bitcoins', function (msg) {
         $('#bitcoins').text(msg);
     });
 
-    $( document ).ready(function() {
-        $( "#m" ).focus();
+    $(document).ready(function () {
+        $("#m").focus();
     });
 </script>
 </body>
 </html>
+
 

@@ -114,12 +114,21 @@ MissionFinder.prototype.missions = [
         ]
     },
     {   description: "Save up at least 20 bitcoins to buy a terminal interface.",
-        trigger: function() { return this.bitcoins > 15; },
-        test: function() { return this.bitcoins > 20; },
+        trigger: function() { return this.bitcoins > 9; },
+        test: function() { return this.bitcoins > 12; },
         completion: function() {return "Jake: Nice going! Now you have enough to buy a terminal.";},
         prompts: [
             "Jake: Hey, this is Jake again. Try to save 20 bitcoins so you can buy a terminal interface.",
             "Jake: You need a terminal interface to do any real hacking."
+        ]
+    },
+    {   description: "Save up at least 10 bitcoins to buy a firewall.",
+        trigger: function() { return this.bitcoins > 15; },
+        test: function() { return this.bitcoins > 20; },
+        completion: function() {return "Jake: Nice going! Now you have enough to buy a terminal.";},
+        prompts: [
+            "Jake: Hey, this is Jake. Try to save 10 bitcoins so you can buy a firewall.",
+            "Jake: You need a firewall to protect against hackers."
         ]
     }
 ];

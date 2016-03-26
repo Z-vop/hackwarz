@@ -5,8 +5,7 @@ var io = require('socket.io')(http);
 var Datastore = require('nedb')
     , db = new Datastore({ filename: 'db/hackwarzdata.nedb', autoload: true });
 
-var finder = require('./missionFinder.js'),
-    MissionFinder = finder.MissionFinder;
+var MissionFinder = require('./missionFinder.js');
 
 // This just serves up the web game UI
 app.get('/', function(req, res){
@@ -15,6 +14,11 @@ app.get('/', function(req, res){
 
 
 io.on('connection', function(socket){
+
+    var firewll = {
+        virus:"virus proteciton: 87%",
+        trojan:"trojan seeker: 62%"
+    };
 
     var isLoggedIn = false;
     var mf = null; // The MissionFactory
@@ -128,6 +132,16 @@ io.on('connection', function(socket){
                 socket.emit("chat_message", "/mission                   Describe current mission");
                 socket.emit("chat_message", "/password new_password     Change your password");
                 socket.emit("chat_message", "/help                      Print this message");
+
+
+            if(msg.startsWith('/firewall')){
+                socket.emit("chat message", firewall.virus);
+                socket.emit("chat message", firewall.bruteforce);
+                socket.emit("chat message", firewall.trojan);
+                socket.emit("chat message", firewall.ddos);
+            }
+
+
             }
 
 
@@ -157,30 +171,4 @@ io.on('connection', function(socket){
 http.listen(3000, function(){
     console.log('listening on *:3000');
 });
-
-
-
-
-var missions = [
-    {   description: "You should protect your account with a password.",
-        trigger: function() { return this.user.level == 1; },
-        test: function() { return this.user.password != ''; },
-        completion: function() { this.user.level = 2; },
-        prompts: [
-            "Jake: Hey, this is Jake. Welcome to the Network.",
-            "Jake: You should set a password before you do anything else."
-        ]
-    },
-    {   description: "Save up at least 20 bitcoins to buy a terminal interface.",
-        trigger: function() { return user.level == 2; },
-        test: function() { return user.bitcoins > 20; },
-        completion: function() {
-          // TODO:  socket.emit("chat_message", "Jake: Nice going! Now you have enough to buy a terminal.");
-        },
-        prompts: [
-            "Jake: Hey, this is Jake again. Try to save 20 bitcoins so you can buy a terminal interface.",
-            "Jake: You need a terminal interface to do any real hacking."
-            ]
-    }
-];
 

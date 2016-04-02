@@ -5,7 +5,7 @@ var io = require('socket.io')(http);
 var Datastore = require('nedb')
     , db = new Datastore({ filename: 'db/hackwarzdata.nedb', autoload: true });
 
-var finder = require('./missionFinder.js'),
+var finder = require('./lib/MissionFinder'),
     MissionFinder = finder.MissionFinder;
 
 // This just serves up the web game UI

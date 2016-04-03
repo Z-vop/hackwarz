@@ -18,6 +18,11 @@ app.get('/', function(req, res){
 
 io.on('connection', function(socket){
 
+    var firewll = {
+        virus:"virus proteciton: 87%",
+        trojan:"trojan seeker: 62%"
+    };
+
     var isLoggedIn = false;
     var user = null;
 
@@ -123,6 +128,14 @@ io.on('connection', function(socket){
                 socket.emit("chat_message", "/mission                   Describe current mission");
                 socket.emit("chat_message", "/password new_password     Change your password");
                 socket.emit("chat_message", "/help                      Print this message");
+            }
+
+
+            if(msg.startsWith('/firewall')){
+                socket.emit("chat message", firewall.virus);
+                socket.emit("chat message", firewall.bruteforce);
+                socket.emit("chat message", firewall.trojan);
+                socket.emit("chat message", firewall.ddos);
             }
 
 

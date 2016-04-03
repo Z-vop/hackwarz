@@ -7,8 +7,6 @@ var expect = require('chai').expect;
 var should = require('chai').should();
 
 var User = require('../lib/User');
-var MissionFinder = require('../lib/MissionFinder');
-var mf = MissionFinder.getInstance();
 
 var user1 = {
     name: "oliver",
@@ -62,33 +60,14 @@ describe("Test User Object", function () {
         });
     });
 
-    describe("Setting and using a Mission", function() {
+    describe('Test mission handling', function() {
 
         var u1 = new User(user1);
 
-        it("should set the user mission if passed a missionID", function(done) {
-            u1.setMission('Mission1');
-            expect(u1.mission).to.equal('Mission1');
-            done();
+        it("should return empty completion message when no mission", function() {
+            u1.checkMissionStatus().should.be.empty;
         });
-
-        it("Should not set the mission to an invalid missionID", function(done) {
-            u1.setMission('Nonsense');
-            expect(u1.mission).to.be.null;
-            done();
-        });
-
-        it("Should throw an error if we send a non-String parameter", function() {
-            expect(function() {
-                u1.setMission(0);
-            }).to.throw(Error);
-        });
-
-        it("Should set the user to 'no mission' if passed a null", function() {
-            u1.setMission('Mission1');
-            u1.setMission(null);
-            expect(u1.mission).to.be.null;
-        })
     });
+
 });
 

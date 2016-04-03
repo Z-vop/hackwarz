@@ -1,14 +1,19 @@
+/** This is the main Hackwarz program */
 
+// Load required libraries
 var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var Datastore = require('nedb')
     , db = new Datastore({ filename: 'db/hackwarzdata.nedb', autoload: true });
 
+
+// Load up our objects
 var MissionFinder = require('./lib/MissionFinder');
-var mf = MissionFinder.getInstance();
+var mf = MissionFinder.getInstance(); // Load up the singleton instance
 var User = require('./lib/User');
 var Mission = require('./lib/Mission');
+
 
 // This just serves up the web game UI
 app.get('/', function(req, res){
@@ -16,51 +21,27 @@ app.get('/', function(req, res){
 });
 
 
+// When a user connects, everything in this function is called per user/socket
 io.on('connection', function(socket){
 
-    var firewll = {
+    // TODO: Not sure what we are going to do here
+    var firewall = {
         virus:"virus proteciton: 87%",
         trojan:"trojan seeker: 62%"
     };
 
-    var isLoggedIn = false;
-    var user = null;
+    // Instance variables
+    var isLoggedIn = false; // After the user has logged in, this is true
+    var user = null;        // Holds the User object
 
+    // Utility function to just make writing output easier
     function write(text){
         socket.emit('chat_message', text);
     }
 
     // A new user has connected
     console.log('A user connected. Socket #' + socket.id);
-
-
     write("SYSTEM: Welcome to the DeepWeb Network. Please login using /user [name]");
-
-
-    // Repeating function to count money, etc.
-    setInterval(function() {
-        if(isLoggedIn) {
-            // Update coins, and update the UI with coins and the user level
-            user.coins += (1.8 ^ user.level) / 100;
-            socket.emit('bitcoins', user.coins);
-            socket.emit('level', user.level);
-        }
-    }, 1000);
-
-    // Repeating function to check missions
-    setInterval(function() {
-        if(isLoggedIn) {
-            // If user is on a mission, check if test condition passed, otherwise do the prompts
-            if (user.mission) {   // User is on a mission
-                var message = user.mission.checkStatus();
-                if(message == "") message = user.mission.getNextPrompt();
-                if(message != "") write(message);
-            } else {
-                mf.findNextMission(user);
-            }
-        }
-    }, 3000);
-
 
     socket.on('chat_message', function(msg) {
 
@@ -84,6 +65,10 @@ io.on('connection', function(socket){
                     if (docs.length > 0) {
                         // TODO: don't use docs.count its a hack
                         user = new User(docs[docs.length - 1]);
+                        if(user.missionID) { // Must fully restore the mission Object
+                            user.mission = mf.fetchMission(user.missionID);
+                            console.log(user.mission);
+                        }
                         socket.emit('chat_message', "SYSTEM: Welcome back.");
                     } else {
                         /* A new user name */
@@ -92,10 +77,6 @@ io.on('connection', function(socket){
                         user.name = u;
                         user.level = 1;
                     }
-                    // Must fully restore the mission state as the function callbacks
-                    // are not saved in the database.
-                    //user.mission = new Mission(user.mission);
-                    //mf.setMission(user.mission_number);
                     // We are logged in
                     isLoggedIn = true;
                     socket.emit('chat_message', "SYSTEM: Login successful.");
@@ -120,7 +101,6 @@ io.on('connection', function(socket){
                 } else {
                     write("SYSTEM: Not on a mission.");
                 }
-
             }
 
             if(msg.startsWith('/help')) {
@@ -130,7 +110,6 @@ io.on('connection', function(socket){
                 socket.emit("chat_message", "/help                      Print this message");
             }
 
-
             if(msg.startsWith('/firewall')){
                 socket.emit("chat message", firewall.virus);
                 socket.emit("chat message", firewall.bruteforce);
@@ -138,30 +117,62 @@ io.on('connection', function(socket){
                 socket.emit("chat message", firewall.ddos);
             }
 
-
         } else {
-            //Its not a command, just send out the message to everyone
-            socket.emit('chat_message', user.name + ': ' + msg);
+            // Not a command, just send out the message to everyone
+            write(user.name + ': ' + msg);
         }
     }); // end-on chat_message
 
     // When user disconnects, save the user information in the database
-    socket.on('disconnect', function(){
-        if(isLoggedIn) {
-            if(user._id) {
-                console.log ("Updating user info in DB");
-                db.update({_id: user._id}, user, {}, function(err, numReplaced){} );
+    socket.on('disconnect', function () {
+        if (isLoggedIn) {
+            // Instead of writing the whole Mission object to the DB, just write the MissionID
+            if (user.mission) {
+                user.missionID = user.mission.missionID;
+                delete user.mission;
+            }
+            if (user._id) {  // an ID can only be here if we read in the user from the DB
+                console.log("Updating user info in DB");
+                db.update({_id: user._id}, user, {}, function (err, numReplaced) {
+                });
             } else {
                 console.log("Writing user info to DB");
-                db.insert(user, function (err, newDoc) {});
+                db.insert(user, function (err, newDoc) {
+                    console.log(newDoc);
+                });
             }
             isLoggedIn = false;
             console.log('User disconnected: ' + (user.name == "" ? socket.id : user.name));
         } else {
-            console.log('User disconnected: ' + socket.id );
+            console.log('User disconnected: ' + socket.id);
         }
 
     }); // end on disconnect
+
+
+    // Repeating function to count money, etc.
+    setInterval(function () {
+        if (isLoggedIn) {
+            // Update coins, and update the UI with coins and the user level
+            user.coins += Math.pow(user.level, 1.7) / 100;
+            socket.emit('bitcoins', user.coins);
+            socket.emit('level', user.level);
+        }
+    }, 1000);
+
+    // Repeating function to check missions
+    setInterval(function () {
+        if (isLoggedIn) {
+            // If user is on a mission, check if test condition passed, otherwise do the prompts
+            if (user.mission) {   // User is on a mission
+                var message = user.checkMissionStatus();
+                if (message == "") message = user.mission.getNextPrompt();
+                if (message != "") write(message);
+            } else {
+                user.mission = mf.findNextMission(user);
+            }
+        }
+    }, 3000);
 
 });
 

@@ -91,12 +91,12 @@ describe('Test MissionFinder', function () {
 
         it('should be no completion message if test not satisfied', function(done) {
             u1.mission.missionID.should.equal('Mission1');
-            u1.checkMissionStatus(u1).should.be.empty;
+            expect(u1.checkMissionComplete(u1)).to.be.empty;
             done();
         });
         it('should be completion message if test satisfied', function(done) {
             u1.password = 'asdf';
-            u1.checkMissionStatus(u1).should.equal("mission 1 completion message");
+            expect(u1.checkMissionComplete(u1)).to.equal("mission 1 completion message");
             u1.level.should.equal(2);
             done();
         });
@@ -111,13 +111,13 @@ describe('Test MissionFinder', function () {
             u1.mission.getNextPrompt().should.equal("mission 2 prompt 1");
             u1.mission.getNextPrompt().should.equal("mission 2 prompt 2");
             u1.mission.getNextPrompt().should.equal("mission 2 prompt 3");
-            u1.mission.getNextPrompt().should.be.empty;
+            expect(u1.mission.getNextPrompt()).to.be.empty;
             done();
         });
         it('should return completion message', function(done) {
-            u1.checkMissionStatus(u1).should.be.empty;
+            expect(u1.checkMissionComplete(u1)).to.be.empty;
             u1.coins = 21;
-            u1.checkMissionStatus(u1).should.equal("mission 2 completion message");
+            u1.checkMissionComplete(u1).should.equal("mission 2 completion message");
             u1.mission = null;
             done();
         });

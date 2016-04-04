@@ -127,6 +127,7 @@ io.on('connection', function(socket){
     socket.on('disconnect', function () {
         if (isLoggedIn) {
             // Instead of writing the whole Mission object to the DB, just write the MissionID
+            delete user.missionID;
             if (user.mission) {
                 user.missionID = user.mission.missionID;
                 delete user.mission;
@@ -165,9 +166,9 @@ io.on('connection', function(socket){
         if (isLoggedIn) {
             // If user is on a mission, check if test condition passed, otherwise do the prompts
             if (user.mission) {   // User is on a mission
-                var message = user.checkMissionStatus();
+                var message = user.checkMissionComplete();
                 if (message == "") message = user.mission.getNextPrompt();
-                if (message != "") write(message);
+                if (message != "") write(message); // Don't write out empty prompts, just for timing
             } else {
                 user.mission = mf.findNextMission(user);
             }

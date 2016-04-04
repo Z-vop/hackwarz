@@ -65,7 +65,7 @@ describe("Test User Object", function () {
         var u1 = new User(user1);
 
         it("should return empty completion message when no mission", function() {
-            u1.checkMissionStatus().should.be.empty;
+            expect(u1.checkMissionComplete()).to.be.empty;
         });
     });
 

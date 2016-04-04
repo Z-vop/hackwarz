@@ -69,7 +69,7 @@ io.on('connection', function(socket){
                             user.mission = mf.fetchMission(user.missionID);
                             console.log(user.mission);
                         }
-                        socket.emit('chat_message', "SYSTEM: Welcome back.");
+                        write("SYSTEM: Welcome back.");
                     } else {
                         /* A new user name */
                         console.log("No user found in DB");
@@ -79,10 +79,10 @@ io.on('connection', function(socket){
                     }
                     // We are logged in
                     isLoggedIn = true;
-                    socket.emit('chat_message', "SYSTEM: Login successful.");
+                    write("SYSTEM: Login successful.");
                 }); // end db.find
             } else {
-                socket.emit('chat_message', "Please login.");
+                write("Please login.");
             }
             return;
         }
@@ -111,15 +111,15 @@ io.on('connection', function(socket){
             }
 
             if(msg.startsWith('/firewall')){
-                socket.emit("chat message", firewall.virus);
-                socket.emit("chat message", firewall.bruteforce);
-                socket.emit("chat message", firewall.trojan);
-                socket.emit("chat message", firewall.ddos);
+                socket.emit("chat_message", firewall.virus);
+                socket.emit("chat_message", firewall.bruteforce);
+                socket.emit("chat_message", firewall.trojan);
+                socket.emit("chat_message", firewall.ddos);
             }
 
         } else {
             // Not a command, just send out the message to everyone
-            write(user.name + ': ' + msg);
+            io.emit("chat_message", user.name + ': ' + msg);
         }
     }); // end-on chat_message
 

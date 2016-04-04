@@ -123,6 +123,31 @@ describe('Test MissionFinder', function () {
         });
     });
 
+    describe('Test Multiple Users', function() {
+        var u1 = new User(user1);
+        u1.level = 2;
+        u1.password = 'asdf';
+        u1.mission = mf.findNextMission(u1);
+        var u2 = new User(user1);
+        u2.level = 2;
+        u2.password = 'asdf';
+        u2.mission = mf.findNextMission(u1);
+
+        it('should return prompts for user1', function (done) {
+            expect(u1.mission.missionID).to.equal('Mission2');
+            u1.mission.getNextPrompt().should.equal("mission 2 prompt 1");
+            u1.mission.getNextPrompt().should.equal("mission 2 prompt 2");
+            u2.mission.getNextPrompt().should.equal("mission 2 prompt 1");
+            u2.mission.getNextPrompt().should.equal("mission 2 prompt 2");
+            u1.mission.getNextPrompt().should.equal("mission 2 prompt 3");
+            expect(u1.mission.getNextPrompt()).to.be.empty;
+            u2.mission.getNextPrompt().should.equal("mission 2 prompt 3");
+            expect(u2.mission.getNextPrompt()).to.be.empty;
+            done();
+        });
+
+    });
+
 });
 
 

@@ -15,18 +15,12 @@ var User = require('./lib/User');
 var Mission = require('./lib/Mission');
 
 
-// This just serves up the web game UI
-app.get('/', function(req, res){
-    res.sendFile(__dirname + '/index.html');
-});
-
-
 // When a user connects, everything in this function is called per user/socket
 io.on('connection', function(socket){
 
     // TODO: Not sure what we are going to do here
     var firewall = {
-        virus:"virus proteciton: 87%",
+        virus:"virus protection: 87%",
         trojan:"trojan seeker: 62%"
     };
 
@@ -61,13 +55,13 @@ io.on('connection', function(socket){
 
                 // Look up user in db, if found set the user object
                 db.find({name: u}, function (err, docs) {
-                    console.log(docs);
+                    //console.log(docs);
                     if (docs.length > 0) {
                         // TODO: don't use docs.count its a hack
                         user = new User(docs[docs.length - 1]);
                         if(user.missionID) { // Must fully restore the mission Object
                             user.mission = mf.fetchMission(user.missionID);
-                            console.log(user.mission);
+                            //console.log(user.mission);
                         }
                         write("SYSTEM: Welcome back.");
                     } else {
@@ -175,10 +169,15 @@ io.on('connection', function(socket){
         }
     }, 3000);
 
-});
+}); // End -- on.socket
 
 http.listen(3000, function(){
     console.log('listening on *:3000');
+});
+
+// This just serves up the web game UI
+app.get('/', function(req, res){
+    res.sendFile(__dirname + '/index.html');
 });
 
 

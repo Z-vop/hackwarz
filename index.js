@@ -38,7 +38,7 @@ io.on('connection', function(socket){
                 // Extract and validate the entered user name
                 var u = (msg.substring(msg.indexOf(" ")+1));
                 /* Username must be one or more letters and numbers */
-                var patt = /[a-z0-9]+/;
+                var patt = /[A-Za-z0-9]+/;
                 if(!patt.test(u)) {
                     socket.emit('error_message', "SYSTEM: Invalid user name, please use letters and digits only.");
                     return;

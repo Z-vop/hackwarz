@@ -10,7 +10,8 @@ var User = require('../lib/User');
 
 var user1 = {
     name: "oliver",
-    level: 1
+    level: 1,
+    color: "blue"
 };
 
 var user2 = {
@@ -18,6 +19,7 @@ var user2 = {
     password: "asdf",
     level: 1,
     coins: 5.0,
+    color: "red"
 };
 
 
@@ -35,10 +37,6 @@ describe("Test User Object", function () {
             expect(u2.name).to.equal(user2.name);
         });
 
-        it("should have no mission set", function () {
-            expect(u1.mission).to.be.null;
-        });
-
         it("should create a default User without a parameter", function () {
             var u3 = new User();
             expect(u3.name).to.be.null;
@@ -51,21 +49,13 @@ describe("Test User Object", function () {
             var u3 = new User(user2);
             expect(u3.name).to.equal("cameron");
             expect(u3.password).to.equal("asdf");
+            expect(u3.color).to.equal("red");
             expect(u3.level).to.equal(1);
             expect(u3.coins).to.equal(5);
         });
 
         it("should implement all of the properties", function() {
-            expect(u1).to.include.all.keys('name', 'password', 'level', 'coins', 'mission');
-        });
-    });
-
-    describe('Test mission handling', function() {
-
-        var u1 = new User(user1);
-
-        it("should return empty completion message when no mission", function() {
-            expect(u1.checkMissionComplete()).to.be.empty;
+            expect(u1).to.include.all.keys('name', 'password', 'color', 'level', 'coins');
         });
     });
 

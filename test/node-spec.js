@@ -23,6 +23,11 @@ describe('Test Nodes', function () {
             expect(n1).to.not.equal(n2);
             expect(n1).to.be.an.instanceOf(Node);
         });
+        it("should create a default object without a parameter", function () {
+            var n3 = new Node();
+            expect(n3).to.be.an.instanceOf(Node);
+            expect(n3.owner).to.equal(0); // no owner
+        });
     });
 
 });

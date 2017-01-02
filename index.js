@@ -9,6 +9,7 @@ var Datastore = require('nedb'), db = new Datastore({ filename: 'db/hackwarzdata
 
 // Load up our objects
 var User = require('./lib/User');
+var Node = require('./lib/Node');
 
 
 // When a user connects, everything in this function is called per user/socket

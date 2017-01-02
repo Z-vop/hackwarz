@@ -6,7 +6,6 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font: 13px Courier, Monoco; background-color: black; }
-        div#content { height: "100%";}
 
         div#header { background-color: #222; padding-top: 5px; padding-left: 5px; padding-bottom: 20px }
         #header div { float: left; padding-left: 10px; padding-right: 10px; }
@@ -14,7 +13,7 @@
         div#level_box { color: yellow; margin: 3; }
         div#coin_box { color: orange; margin: 3; }
 
-        div#messages { background-color: #444; overflow-y: scroll; height: 100%}
+        div#messages { background-color: #444; overflow: auto; height: 150px;}
         #messages p { color: #3F3; padding: 5px 10px; }
         #messages p.chat_error { color: #F00; }
 
@@ -33,11 +32,10 @@
     <div id="messages">
     </div>
 
-    <form action="">
+    <form id="command" action="">
         <input id="m" autocomplete="off"/>
         <button>Send</button>
     </form>
-
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
@@ -49,12 +47,21 @@
         return false;
     });
 
+    function updateScroll() {
+        var mssgHeight = $(window).height() - $('#header')[0].clientHeight - $('#command')[0].clientHeight;
+        $('#messages').css('height', mssgHeight+'px');
+        $('#messages').animate({ scrollTop: $('#messages')[0].scrollHeight}, 500);
+        // $('#messages').scrollTop($('#messages')[0].scrollHeight);
+    }
+
     socket.on('error_message', function (msg) {
         $('#messages').append($('<p class="chat_error"></p>').text(msg));
+        updateScroll();
     });
 
     socket.on('chat_message', function (msg) {
         $('#messages').append($('<p></p>').text(msg));
+        updateScroll();
     });
 
     socket.on('level', function (msg) {
@@ -68,6 +75,9 @@
     $(document).ready(function () {
         $("#m").focus();
     });
+
+
+
 </script>
 </body>
 </html>

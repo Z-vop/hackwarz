@@ -24,7 +24,7 @@ var user2 = {
 
 
 describe("Test User Object", function () {
-    describe("Creating User objects", function () {
+    describe("Test object construction", function () {
 
         var u1 = new User(user1);
         var u2 = new User(user2);

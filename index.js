@@ -30,52 +30,70 @@ io.on('connection', function(socket){
 
     socket.on('chat_message', function(msg) {
 
+        // parse the command arguments into an array for easy access.
+        var argv = [];                          // argv[0] is the command itself.
+        argv = msg.split(' ');
+        console.log(argv);
+
         // Don't allow user to continue until they identify themselves
         if(!isLoggedIn) {
+            // The /user command allows a user to log in
+            if (argv[0] == '/name' || argv[0] == '/user') {
 
-            // The /name command allows a user to log in
-            if (msg.startsWith('/name ') || msg.startsWith('/user ')) {
-                // Extract and validate the entered user name
-                var u = (msg.substring(msg.indexOf(" ")+1));
-                /* Username must be one or more letters and numbers */
+                // Username must be one or more letters and numbers
+                if(argv[1] == null) {
+                    socket.emit('error_message', "SYSTEM: Username required.");
+                    return;
+                }
+                var username = argv[1];
                 var patt = /[A-Za-z0-9]+/;
-                if(!patt.test(u)) {
+                if (!patt.test(username)) {
                     socket.emit('error_message', "SYSTEM: Invalid user name, please use letters and digits only.");
                     return;
                 }
 
-                // Look up user in db, if found set the user object
-                db.find({name: u}, function (err, docs) {
+                // Look up user in db
+                db.find({name: username}, function (err, docs) {
                     if (docs.length > 0) {
                         console.log("Found user in DB, length: " + docs.length);
-                        user = new User(docs[docs.length - 1]);
+                        // if found check the password
+                        if (argv[2] == null) {
+                            socket.emit('error_message', "SYSTEM: Password required.");
+                            return;
+                        }
+                        var u = docs[docs.length - 1]; // Just in case there are > 1 matches
+                        if (argv[2] != u.password) {
+                            socket.emit('error_message', "SYSTEM: Invalid username or password.");
+                            return;
+                        }
+                        // The password is a match, set the user object
+                        user = new User(u);
                         write("SYSTEM: Welcome back.");
                     } else {
-                        /* A new user name */
+                        // Otherwise we have a new user name
                         console.log("No user found in DB");
-                        user = new User();
-                        user.name = u;
-                        user.level = 1;
+                        // TODO: Assign a random password
+                        user = new User({name: username, password: 'password', level: 1});
                     }
                     // We are logged in
                     isLoggedIn = true;
                     write("SYSTEM: Login successful.");
                 }); // end db.find
             } else {
+                // not logged in and didn't try the /user command
                 write("Please login.");
-            }
+            } // end if
             return;
-        }
+        } // end if (!isLoggedIn)
 
         // is the message a command?
         if(msg.startsWith('/')) {
+            // TODO: Replace with a switch statement and parse out the arguments
 
-            if (msg.startsWith('/name') || msg.startsWith('/user')) {
-                write("SYSTEM: already logged in.");
-            }
             if (msg.startsWith('/password ')){
                 var pw = (msg.substring(msg.indexOf(" ")+1));
                 user.password = pw;
+                write("SYSTEM: User password set.");
             }
             if (msg.startsWith('/logout')){
                 logOut();

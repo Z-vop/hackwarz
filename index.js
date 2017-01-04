@@ -21,14 +21,14 @@ io.on('connection', function(socket){
 
     // Utility function to just make writing output easier
     function write(text){
-        socket.emit('chat_message', text);
+        socket.emit('message', text);
     }
 
     // A new user has connected
     console.log('A user connected. Socket #' + socket.id);
-    write("SYSTEM: Welcome to Hackwarz. Please login using /user [name]");
+    write("Welcome to Hackwarz. Please login using /user [name]");
 
-    socket.on('chat_message', function(msg) {
+    socket.on('message', function(msg) {
 
         // parse the command arguments into an array for easy access.
         var argv = [];                          // argv[0] is the command itself.
@@ -42,7 +42,7 @@ io.on('connection', function(socket){
 
                 // Username must be one or more letters and numbers
                 if(argv[1] == null) {
-                    socket.emit('error_message', "SYSTEM: Username required.");
+                    socket.emit('error_message', "Username required.");
                     return;
                 }
                 var username = argv[1];
@@ -58,17 +58,17 @@ io.on('connection', function(socket){
                         console.log("Found user in DB, length: " + docs.length);
                         // if found check the password
                         if (argv[2] == null) {
-                            socket.emit('error_message', "SYSTEM: Password required.");
+                            socket.emit('error_message', "Password required.");
                             return;
                         }
                         var u = docs[docs.length - 1]; // Just in case there are > 1 matches
                         if (argv[2] != u.password) {
-                            socket.emit('error_message', "SYSTEM: Invalid username or password.");
+                            socket.emit('error_message', "Invalid username or password.");
                             return;
                         }
                         // The password is a match, set the user object
                         user = new User(u);
-                        write("SYSTEM: Welcome back.");
+                        write("Welcome back.");
                     } else {
                         // Otherwise we have a new user name
                         console.log("No user found in DB");
@@ -77,7 +77,7 @@ io.on('connection', function(socket){
                     }
                     // We are logged in
                     isLoggedIn = true;
-                    write("SYSTEM: Login successful.");
+                    write("Login successful.");
                 }); // end db.find
             } else {
                 // not logged in and didn't try the /user command
@@ -93,14 +93,14 @@ io.on('connection', function(socket){
             if (msg.startsWith('/password ')){
                 var pw = (msg.substring(msg.indexOf(" ")+1));
                 user.password = pw;
-                write("SYSTEM: User password set.");
+                write("User password set.");
             }
             if (msg.startsWith('/logout')){
                 logOut();
             }
         } else {
             // Not a command, just send out the message to everyone
-            io.emit("chat_message", user.name + ': ' + msg);
+            io.emit("chat", user.name + ': ' + msg);
         }
     }); // end-on chat_message
 
@@ -127,7 +127,7 @@ io.on('connection', function(socket){
         }
         isLoggedIn = false;
         user = null;
-        write ("SYSTEM: User logged off.");
+        write ("User logged off.");
     }
 
     // Repeating function to count money, etc.

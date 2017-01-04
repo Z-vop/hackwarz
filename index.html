@@ -12,10 +12,11 @@
         #header p { color: white; float: left; }
         div#level_box { color: yellow; margin: 3; }
         div#coin_box { color: orange; margin: 3; }
+        div#error_box { float: right; background-color: #FF0000; color: white; margin: 3; visibility: hidden}
 
         div#messages { background-color: #444; overflow: auto; height: 150px;}
         #messages p { color: #3F3; padding: 5px 10px; }
-        #messages p.chat_error { color: #F00; }
+        #messages p.error_message { color: #F00; }
 
         form { padding: 2px; position: fixed; bottom: 0; width: 100%; }
         form input { font: 13px Courier; background-color: #333333; color: green; border: 0; padding: 8px; width: 90%; margin-right: .5%; }
@@ -27,6 +28,7 @@
     <div id="header"><p>Hackwarz!</p>
         <div id="level_box">Level: <label id="level"></label></div>
         <div id="coin_box">Bitcoins: <label id="bitcoins"></label></div>
+        <div id="error_box">You have been disconnected from the server.</div>
     </div>
 
     <div id="messages">
@@ -42,7 +44,7 @@
 <script>
     var socket = io();
     $('form').submit(function () {
-        socket.emit('chat_message', $('#m').val());
+        socket.emit('message', $('#m').val());
         $('#m').val('');
         return false;
     });
@@ -54,13 +56,26 @@
         // $('#messages').scrollTop($('#messages')[0].scrollHeight);
     }
 
+    function log(str) {
+        $('#messages').append($('<p></p>').text(str));
+    }
+
+    function logError(str) {
+        $('#messages').append($('<p class="error_message"></p>').text(str));
+    }
+
     socket.on('error_message', function (msg) {
-        $('#messages').append($('<p class="chat_error"></p>').text(msg));
+        logError(msg);
         updateScroll();
     });
 
-    socket.on('chat_message', function (msg) {
-        $('#messages').append($('<p></p>').text(msg));
+    socket.on('message', function (msg) {
+        log(msg);
+        updateScroll();
+    });
+
+    socket.on('chat', function (msg) {
+        log(msg);
         updateScroll();
     });
 
@@ -70,6 +85,22 @@
 
     socket.on('bitcoins', function (msg) {
         $('#bitcoins').text(msg);
+    });
+
+    // Error events
+
+    socket.on('disconnect', function () {
+        $('#error_box').css({visibility: "visible"});
+        log('You have been disconnected');
+    });
+
+    socket.on('reconnect', function () {
+        $('#error_box').css({visibility: "hidden"});
+        log('You have been reconnected');
+    });
+
+    socket.on('reconnect_error', function () {
+        $('#error_box').css({visibility: "visible"});
     });
 
     $(document).ready(function () {

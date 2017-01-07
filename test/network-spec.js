@@ -64,11 +64,18 @@ describe("Test Network Operations", function () {
             expect(network.nodes.length).to.equal(2);
         })
 
+        it("should allow adding of Connections", function() {
+            network.connectNodes(node1, node2);
+            expect(network.connections.length).to.equal(1);
+            expect(network.connections[0].node1).to.equal(node1.id);
+        })
+
         it("should return JSON", function() {
             var _json = network.json;
             var n2 = JSON.parse(_json);
             expect(n2.description).to.equal("Generic Network");
             expect(n2.nodes.length).to.equal(2);
+            expect(n2.connections.length).to.equal(1);
             console.log(n2);
         });
     });

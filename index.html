@@ -44,7 +44,12 @@
 <script>
     var socket = io();
     $('form').submit(function () {
-        socket.emit('message', $('#m').val());
+        var msg = $('#m').val();
+        if(msg.startsWith('#')) {
+            socket.emit('sync', msg.substring(1));
+        } else {
+            socket.emit('message', msg);
+        }
         $('#m').val('');
         return false;
     });
@@ -76,6 +81,11 @@
 
     socket.on('chat', function (msg) {
         log(msg);
+        updateScroll();
+    });
+
+    socket.on('sync', function (msg) {
+        log("sync: " + msg);
         updateScroll();
     });
 

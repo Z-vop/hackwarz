@@ -7,9 +7,7 @@ var io = require('socket.io')(http);
 var Datastore = require('nedb'), db = new Datastore({ filename: 'db/hackwarzdata.nedb', autoload: true });
 
 
-// Load up our objects
-var User = require('./lib/User');
-var Node = require('./lib/Node');
+
 
 
 // When a user connects, everything in this function is called per user/socket
@@ -99,10 +97,27 @@ io.on('connection', function(socket){
                 logOut();
             }
         } else {
-            // Not a command, just send out the message to everyone
+            // Not a command, just send out a chat message to everyone
             io.emit("chat", user.name + ': ' + msg);
         }
-    }); // end-on chat_message
+    }); // end-on message
+
+    socket.on('sync', function(msg) {
+        console.log("got sync message: " + msg);
+        if (isLoggedIn) {
+            io.emit("sync", _json);
+        } else {
+            socket.emit('error_message', "User not logged in.");
+        }
+    });
+
+    socket.on('chat', function(msg) {
+        if (!isLoggedIn) {
+            io.emit("chat", user.name + ': ' + msg);
+        } else {
+            socket.emit('error_message', "User not logged in.");
+        }
+    });
 
     // When user disconnects, save the user information in the database
     socket.on('disconnect', function () {
@@ -142,14 +157,64 @@ io.on('connection', function(socket){
 
 }); // End -- on.socket
 
-http.listen(3000, function(){
-    console.log('listening on *:3000');
+http.listen(7000, function(){
+    console.log('listening on *:7000');
 });
 
 // This just serves up the web game UI
 app.get('/', function(req, res){
     res.sendFile(__dirname + '/index.html');
 });
+
+
+
+// Load up our objects
+var User = require('./lib/User');
+var Node = require('./lib/Node');
+var Connection = require('./lib/Connection');
+var Network = require('./lib/Network');
+
+var users = [];
+var network = null;
+
+var user1 = {
+    name: "oliver",
+    level: 1,
+    color: "blue"
+};
+
+var user2 = {
+    name: "cameron",
+    password: "asdf",
+    level: 1,
+    coins: 5.0,
+    color: "red"
+};
+
+var node1 = {
+    description: "node1",
+    x: 100, y: 100
+};
+
+var node2 = {
+    description: "node2",
+    x: 300, y: 100
+}
+
+
+var u1 = new User(user1);
+var u2 = new User(user2);
+users = [u1, u2];
+
+node1 = new Node(node1);
+node2 = new Node(node2);
+network = new Network();
+network.nodes.push(node1);
+network.nodes.push(node2);
+network.connectNodes(node1, node2);
+var _json = network.json;
+var network2 = JSON.parse(_json);
+console.log("finished JSON: " + _json );
 
 
 

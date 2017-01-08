@@ -6,13 +6,15 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var Datastore = require('nedb'), db = new Datastore({ filename: 'db/hackwarzdata.nedb', autoload: true });
 
-
+var allUsers = [];
 
 
 
 // When a user connects, everything in this function is called per user/socket
 io.on('connection', function(socket){
 
+    allUsers.push(socket.id);
+    console.log(allUsers);
     // Instance variables
     var isLoggedIn = false; // After the user has logged in, this is true
     var user = null;        // Holds the User object
@@ -101,6 +103,10 @@ io.on('connection', function(socket){
             io.emit("chat", user.name + ': ' + msg);
         }
     }); // end-on message
+
+    socket.on('giveusers', function(msg) {
+        socket.emit(allUsers);
+    });
 
     socket.on('sync', function(msg) {
         console.log("got sync message: " + msg);
@@ -191,27 +197,20 @@ var user2 = {
     color: "red"
 };
 
-var node1 = {
-    description: "node1",
-    x: 100, y: 100
-};
-
-var node2 = {
-    description: "node2",
-    x: 300, y: 100
-}
-
-
 var u1 = new User(user1);
 var u2 = new User(user2);
 users = [u1, u2];
 
-node1 = new Node(node1);
-node2 = new Node(node2);
+node1 = new Node({description: "node1", x: 100, y: 100,baseColor:'red'});
+node2 = new Node({description: "node2", x: 300, y: 100});
+node3 = new Node({description: "node3", x: 500, y: 100, r: 40, defense: 200});
+
 network = new Network();
 network.nodes.push(node1);
 network.nodes.push(node2);
+network.nodes.push(node3);
 network.connectNodes(node1, node2);
+network.connectNodes(node2, node3);
 var _json = network.json;
 var network2 = JSON.parse(_json);
 console.log("finished JSON: " + _json );

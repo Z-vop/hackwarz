@@ -76,7 +76,6 @@ describe("Test Network Operations", function () {
             expect(n2.description).to.equal("Generic Network");
             expect(n2.nodes.length).to.equal(2);
             expect(n2.connections.length).to.equal(1);
-            console.log(n2);
         });
     });
 

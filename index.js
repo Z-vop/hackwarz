@@ -6,15 +6,27 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var Datastore = require('nedb'), db = new Datastore({ filename: 'db/hackwarzdata.nedb', autoload: true });
 
-var allUsers = [];
+// Load up our objects
+var User = require('./lib/User');
+var Node = require('./lib/Node');
+var Connection = require('./lib/Connection');
+var Network = require('./lib/Network');
 
-
+var network = new Network();
+var users = new Map();
+users.sanitize = function() {
+    // Sanitize the user array
+    var users_sub = [];
+    this.forEach(function(value) {
+        var new_user = { name: value.name, color: value.color, level: value.level, coins: value.coins }
+        users_sub.push(new_user);
+    });
+    return users_sub;
+}
 
 // When a user connects, everything in this function is called per user/socket
 io.on('connection', function(socket){
 
-    allUsers.push(socket.id);
-    console.log(allUsers);
     // Instance variables
     var isLoggedIn = false; // After the user has logged in, this is true
     var user = null;        // Holds the User object
@@ -40,17 +52,25 @@ io.on('connection', function(socket){
             // The /user command allows a user to log in
             if (argv[0] == '/name' || argv[0] == '/user') {
 
-                // Username must be one or more letters and numbers
-                if(argv[1] == null) {
+                var username = argv[1];
+                if(username == null) {
                     socket.emit('error_message', "Username required.");
                     return;
                 }
-                var username = argv[1];
+                // Username must be one or more letters and numbers
                 var patt = /[A-Za-z0-9]+/;
                 if (!patt.test(username)) {
-                    socket.emit('error_message', "SYSTEM: Invalid user name, please use letters and digits only.");
+                    socket.emit('error_message', "Invalid user name, please use letters and digits only.");
                     return;
                 }
+                // Be sure user is not already logged in
+                users.forEach(function(user_obj, key) {
+                    if(username == user_obj.name) {
+                        socket.emit('error_message', "User is already logged in from another device.");
+                        // TODO: This return statement is not working somehow
+                        return;
+                    };
+                });
 
                 // Look up user in db
                 db.find({name: username}, function (err, docs) {
@@ -77,7 +97,8 @@ io.on('connection', function(socket){
                     }
                     // We are logged in
                     isLoggedIn = true;
-                    write("Login successful.");
+                    users.set(socket.id, user);
+                    write("Login successful. There are " + users.size + " user(s) logged-in.");
                 }); // end db.find
             } else {
                 // not logged in and didn't try the /user command
@@ -89,7 +110,9 @@ io.on('connection', function(socket){
         // is the message a command?
         if(msg.startsWith('/')) {
             // TODO: Replace with a switch statement and parse out the arguments
-
+            if (argv[0] == '/name' || argv[0] == '/user') {
+                socket.emit('error_message', "A user already is logged in.");
+            }
             if (msg.startsWith('/password ')){
                 var pw = (msg.substring(msg.indexOf(" ")+1));
                 user.password = pw;
@@ -104,17 +127,16 @@ io.on('connection', function(socket){
         }
     }); // end-on message
 
-    socket.on('giveusers', function(msg) {
-        socket.emit(allUsers);
-    });
-
     socket.on('sync', function(msg) {
         console.log("got sync message: " + msg);
-        if (isLoggedIn) {
-            io.emit("sync", _json);
-        } else {
-            socket.emit('error_message', "User not logged in.");
-        }
+        switch (msg) {
+            case "users":
+                socket.emit("sync", JSON.stringify(users.sanitize()));
+                break;
+            case "all":
+                socket.emit("sync", _json);
+                break;
+        };
     });
 
     socket.on('chat', function(msg) {
@@ -148,6 +170,7 @@ io.on('connection', function(socket){
         }
         isLoggedIn = false;
         user = null;
+        users.delete(socket.id);
         write ("User logged off.");
     }
 
@@ -173,47 +196,16 @@ app.get('/', function(req, res){
 });
 
 
-
-// Load up our objects
-var User = require('./lib/User');
-var Node = require('./lib/Node');
-var Connection = require('./lib/Connection');
-var Network = require('./lib/Network');
-
-var users = [];
-var network = null;
-
-var user1 = {
-    name: "oliver",
-    level: 1,
-    color: "blue"
-};
-
-var user2 = {
-    name: "cameron",
-    password: "asdf",
-    level: 1,
-    coins: 5.0,
-    color: "red"
-};
-
-var u1 = new User(user1);
-var u2 = new User(user2);
-users = [u1, u2];
-
 node1 = new Node({description: "node1", x: 100, y: 100,baseColor:'red'});
 node2 = new Node({description: "node2", x: 300, y: 100});
 node3 = new Node({description: "node3", x: 500, y: 100, r: 40, defense: 200});
-
-network = new Network();
 network.nodes.push(node1);
 network.nodes.push(node2);
 network.nodes.push(node3);
 network.connectNodes(node1, node2);
 network.connectNodes(node2, node3);
 var _json = network.json;
-var network2 = JSON.parse(_json);
-console.log("finished JSON: " + _json );
+
 
 
 

@@ -16,12 +16,9 @@ var network = new Network();
 var users = new Map();
 users.sanitize = function() {
     // Sanitize the user array
-    var users_sub = [];
-    this.forEach(function(value) {
-        var new_user = { name: value.name, color: value.color, level: value.level, coins: value.coins }
-        users_sub.push(new_user);
-    });
-    return users_sub;
+    return Array.from(this.values()).map(function(user) {
+        return { name: user.name, color: user.color, level: user.level, coins: user.coins };
+    })
 }
 
 // When a user connects, everything in this function is called per user/socket
@@ -38,7 +35,7 @@ io.on('connection', function(socket){
 
     // A new user has connected
     console.log('A user connected. Socket #' + socket.id);
-    write("Welcome to Hackwarz. Please login using /user [name]");
+    write("Connected.");
 
     socket.on('message', function(msg) {
 
@@ -88,7 +85,6 @@ io.on('connection', function(socket){
                         }
                         // The password is a match, set the user object
                         user = new User(u);
-                        write("Welcome back.");
                     } else {
                         // Otherwise we have a new user name
                         console.log("No user found in DB");

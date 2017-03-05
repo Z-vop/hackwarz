@@ -1,0 +1,56 @@
+{
+  "network" : {
+    "description" : "Generic Network",
+    "connections" : [
+      {
+        "description" : "Generic Connection",
+        "node1" : "a904461af54a",
+        "color" : "#154811",
+        "node2" : "780bfa02043f",
+        "id" : "53919a1a5edf",
+        "attackPower" : 0
+      },
+      {
+        "description" : "Generic Connection",
+        "node1" : "780bfa02043f",
+        "color" : "#154811",
+        "node2" : "5cf36248305d",
+        "id" : "55430f22722d",
+        "attackPower" : 0
+      }
+    ],
+    "id" : "efd5d81d75b3",
+    "nodes" : [
+      {
+        "id" : "a904461af54a",
+        "r" : 30,
+        "baseColor" : "red",
+        "owner" : 0,
+        "x" : 100,
+        "description" : "node1",
+        "defense" : 100,
+        "y" : 100
+      },
+      {
+        "id" : "780bfa02043f",
+        "r" : 30,
+        "baseColor" : "#e8e8e8",
+        "owner" : 0,
+        "x" : 300,
+        "description" : "node2",
+        "defense" : 100,
+        "y" : 100
+      },
+      {
+        "id" : "5cf36248305d",
+        "r" : 40,
+        "baseColor" : "#e8e8e8",
+        "owner" : 0,
+        "x" : 500,
+        "description" : "node3",
+        "defense" : 200,
+        "y" : 100
+      }
+    ]
+  }
+}

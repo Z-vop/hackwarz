@@ -4,8 +4,8 @@
 
 import {Map, fromJS} from 'immutable';
 import {expect} from 'chai';
-import {INITIAL_STATE} from '../src/core.js';
 
+import {INITIAL_STATE} from '../src/reducer';
 import makeStore from '../src/store';
 
 describe('store', () => {
@@ -15,10 +15,7 @@ describe('store', () => {
         const state1 = store.getState();
         const state2 = INITIAL_STATE();
 
-        expect(state1.description).to.equal(state2.description);
-
-
-
+        expect(state1.description).to.equal(state2.description); /* TODO: Can't compare whole state because of ID #s */
     });
 
 });

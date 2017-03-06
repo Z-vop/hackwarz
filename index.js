@@ -125,6 +125,7 @@ io.on('connection', function(socket){
         }
     }); // end-on message
 
+
     socket.on('sync', function(msg) {
         console.log("got sync message: " + msg);
         switch (msg) {
@@ -137,10 +138,13 @@ io.on('connection', function(socket){
         };
     });
 
-    //socket.on('action', store.dispatch.bind(store));
-    socket.on('action', function(msg) {
-        console.log(msg);
-        store.dispatch(msg);
+    socket.on('action', function(action) {
+        console.log(action);
+        try {
+            store.dispatch(action);
+        } catch(e) {
+            console.log("Error with action: " + e);
+        }
     });
 
     socket.on('chat', function(msg) {

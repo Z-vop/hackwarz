@@ -4,7 +4,7 @@
 
 import {fromJS, List, Map} from 'immutable';
 
-function generateId() {
+export function generateId() {
     var id = 'xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
@@ -12,7 +12,7 @@ function generateId() {
     return id;
 }
 
-function INITIAL_STATE() {
+export function INITIAL_STATE() {
     return fromJS({
         id: generateId(),
         description: "Network",
@@ -26,17 +26,18 @@ function DEFAULT_NODE() {
         id: generateId(),
         defense: 100,
         attack: 10,
-        description: "Generic Node",
+        description: "Node",
         x: 100,
         y: 100,
         r: 30,
         baseColor: '#e8e8e8',
-        owner: 0,
-        health: 0
+        owner: 0
     })
 }
 
-export default function reducer(state = INITIAL_STATE(), action) {
+export default function reducer(initialState = INITIAL_STATE(), action) {
+
+    const state = INITIAL_STATE().merge(initialState);
 
     switch (action.type) {
         case 'SET_NETWORK':

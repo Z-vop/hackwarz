@@ -2,10 +2,10 @@
  * Created by cameron on 2/19/17.
  */
 
-import {Map, fromJS} from 'immutable';
+import {Map, List, fromJS} from 'immutable';
 import {expect} from 'chai';
 
-import reducer from '../src/reducer.js';
+import reducer from '../src/reducer';
 
 /* Sample data */
 const network1 = {
@@ -19,7 +19,7 @@ const network1 = {
         {id: "53919a1a5edf", description: "conn1", color: "#154811", node1: "a904461af54a", node2: "780bfa02043f"}
     ]
 };
-const node3 = {id: "5cf36248305d", description: "node3", r: 40, baseColor: "#e8e8e8", x: 500, y: 100};
+const node3 = {id: "5cf36248305d", description: "node3", defense: 100, attack: 10, r: 40, baseColor: "#e8e8e8", owner: 0, x: 500, y: 100 } ;
 const conn2 = {id: "55430f22722d", description: "conn2", color: "#154811", node1: "780bfa02043f", node2: "5cf36248305d" };
 const network2 = {
     id: "efd5d81d75b3",
@@ -27,7 +27,7 @@ const network2 = {
     nodes: [
         {id: "a904461af54a", description: "node1", r: 30, baseColor: "red", x: 100, y: 100},
         {id: "780bfa02043f", description: "node2", r: 30, baseColor: "#e8e8e8", x: 300, y: 100},
-        {id: "5cf36248305d", description: "node3", r: 40, baseColor: "#e8e8e8", x: 500, y: 100}
+        {id: "5cf36248305d", description: "node3", defense: 100, attack: 10, r: 40, baseColor: "#e8e8e8", owner: 0, x: 500, y: 100 }
     ],
     connections: [
         {id: "53919a1a5edf", description: "conn1", color: "#154811", node1: "a904461af54a", node2: "780bfa02043f"},
@@ -45,16 +45,10 @@ describe('reducer', () => {
     })
 
     it('handles ADD_NODE', () => {
-        const initialState = { id: "efd5d81d75b3" }
-        const action = {type: 'ADD_NODE', node: node3}
+        const initialState = fromJS(network1);
+        const action = {type: 'ADD_NODE', node: node3};
         const nextState = reducer(initialState, action);
-        const expected_state = {
-            id: "efd5d81d75b3",
-            description: "Network",
-            nodes: [{id: "5cf36248305d", description: "node3", r: 40, baseColor: "#e8e8e8", x: 500, y: 100}],
-            connections: []
-        }
-        expect(nextState).to.equal(fromJS(expected_state));
+        expect(nextState.get('nodes')).to.equal(fromJS(network2).get('nodes'));
     })
 
     it('handles ADD_CONNECTION', () => {

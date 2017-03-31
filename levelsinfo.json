@@ -1,0 +1,168 @@
+[
+  {
+    "description": "Level 1",
+    "nodes": [
+      {
+        "id": "89ffc0e4f7b2",
+        "defense": 100,
+        "attack": 10,
+        "description": "node1",
+        "x": 100,
+        "y": 100,
+        "r": 30,
+        "baseColor": "red",
+        "owner": 0,
+        "health": 100
+      },
+      {
+        "id": "c4e5ac7bbbb7",
+        "defense": 100,
+        "attack": 10,
+        "description": "node2",
+        "x": 300,
+        "y": 100,
+        "r": 30,
+        "baseColor": "#e8e8e8",
+        "owner": 0,
+        "health": 100
+      },
+      {
+        "id": "4a9248abb6d4",
+        "defense": 200,
+        "attack": 10,
+        "description": "node3",
+        "x": 500,
+        "y": 100,
+        "r": 40,
+        "baseColor": "#e8e8e8",
+        "owner": 0,
+        "health": 100
+      }
+    ],
+    "connections": [
+      {
+        "id": "71bb771c6570",
+        "node1": "89ffc0e4f7b2",
+        "node2": "c4e5ac7bbbb7"
+      },
+      {
+        "id": "bffdd8762ca8",
+        "node1": "c4e5ac7bbbb7",
+        "node2": "4a9248abb6d4"
+      }
+    ]
+  },
+
+  // Level 2
+  {
+    "id": "0108ab67cf2a",
+    "description": "Level 2",
+    "nodes": [
+      {
+        "id": "89ffc0e4f7b2",
+        "defense": 100,
+        "attack": 10,
+        "description": "node1",
+        "x": 100,
+        "y": 100,
+        "r": 30,
+        "baseColor": "red",
+        "owner": 0,
+        "health": 100
+      },
+      {
+        "id": "c4e5ac7bbbb7",
+        "defense": 100,
+        "attack": 10,
+        "description": "node2",
+        "x": 300,
+        "y": 100,
+        "r": 30,
+        "baseColor": "#e8e8e8",
+        "owner": 0,
+        "health": 100
+      },
+      {
+        "id": "4a9248abb6d4",
+        "defense": 200,
+        "attack": 10,
+        "description": "node3",
+        "x": 500,
+        "y": 100,
+        "r": 40,
+        "baseColor": "#e8e8e8",
+        "owner": 0,
+        "health": 100
+      }
+    ],
+    "connections": [
+      {
+        "id": "71bb771c6570",
+        "node1": "89ffc0e4f7b2",
+        "node2": "c4e5ac7bbbb7"
+      },
+      {
+        "id": "bffdd8762ca8",
+        "node1": "c4e5ac7bbbb7",
+        "node2": "4a9248abb6d4"
+      }
+    ]
+  },
+
+
+  {
+    "id": "3",
+    "description": "Level 3",
+    "nodes": [
+      {
+        "id": "89ffc0e4f7b2",
+        "defense": 100,
+        "attack": 10,
+        "description": "node1",
+        "x": 100,
+        "y": 100,
+        "r": 30,
+        "baseColor": "red",
+        "owner": 0,
+        "health": 100
+      },
+      {
+        "id": "c4e5ac7bbbb7",
+        "defense": 100,
+        "attack": 10,
+        "description": "node2",
+        "x": 300,
+        "y": 100,
+        "r": 30,
+        "baseColor": "#e8e8e8",
+        "owner": 0,
+        "health": 100
+      },
+      {
+        "id": "4a9248abb6d4",
+        "defense": 200,
+        "attack": 10,
+        "description": "node3",
+        "x": 500,
+        "y": 100,
+        "r": 40,
+        "baseColor": "#e8e8e8",
+        "owner": 0,
+        "health": 100
+      }
+    ],
+    "connections": [
+      {
+        "id": "71bb771c6570",
+        "node1": "89ffc0e4f7b2",
+        "node2": "c4e5ac7bbbb7"
+      },
+      {
+        "id": "bffdd8762ca8",
+        "node1": "c4e5ac7bbbb7",
+        "node2": "4a9248abb6d4"
+      }
+    ]
+}
+
+]

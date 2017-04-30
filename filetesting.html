@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        html,
+        body {
+            margin: 0;
+            overflow: hidden;
+            height: 100%;
+            background: black;
+        }
+
+        canvas[resize] {
+            width: 100%;
+            height: 100%;
+        }
+
+    </style>
+    <meta charset="UTF-8">
+    <title>Hackwarz Network Editor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.10.3/paper-full.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js"></script>
+    <script src="/hw_graphics.js"></script>
+    <script>
+        // Only execute our code once the DOM is ready.
+        window.onload = function () {
+
+            var canvas = document.getElementById('myCanvas');
+            var c = canvas.getContext('2nd');
+            paper.setup(canvas);
+            view.draw();
+
+            canvas.addEventListener('mousedown',click,false);
+            function click(){
+                for(i=0;i<addedObjects.length;i++){
+
+                    if(addedObjects[i].onMouseDown == true) {
+                        addedObjects[i].onMouseDown = function () {
+                            if (this.selected == false) {
+                                this.selected = true;
+                            } else {
+                                this.selected = false;
+                            }
+                        }
+                    }
+                }
+
+            }
+
+
+
+
+
+            var addedObjects =  [
+        [780, 337, 95, '#008000'],
+        [763, 142, 35, '#008000'],
+        [891, 186, 35, '#008000'],
+        [968, 287, 35, '#008000'],
+        [954, 411, 35, '#008000'],
+        [860, 509, 35, '#008000'],
+        [725, 523, 35, '#008000'],
+        [600, 424, 35, '#008000'],
+        [579, 283, 35, '#008000'],
+        [650, 174, 35, '#008000'],
+        [1359, 71, 25, '#df5767'],
+        [1375, 308, 25, '#df5767'],
+        [1375, 521, 25, '#df5767'],
+        [260, 87, 25, '#4286f4'],
+        [261, 300, 25, '#4286f4'],
+        [260, 559, 25, '#4286f4'],
+        [514, 354, 15, '#008000'],
+        [557, 191, 15, '#008000'],
+        [686, 94, 15, '#008000'],
+        [843, 100, 15, '#008000'],
+        [989, 197, 15, '#008000'],
+        [1035, 363, 15, '#008000'],
+        [966, 516, 15, '#008000'],
+        [802, 597, 15, '#008000'],
+        [608, 532, 15, '#008000'],
+        [469, 248, 25, '#008000'],
+        [585, 78, 25, '#008000'],
+        [765, 42, 25, '#008000'],
+        [954, 101, 25, '#008000'],
+        [1077, 271, 25, '#008000'],
+        [1062, 464, 25, '#008000'],
+        [912, 601, 25, '#008000'],
+        [672, 610, 25, '#008000'],
+        [493, 472, 25, '#008000']];
+
+         var addednodes = [];
+         var linednodes = [];
+         var selectedNodes = [];
+         var connectIt = [];
+         var nodeattackcount = 0;
+
+
+            connectTool = new Node(150, 330, 10, "#f49542");
+            connectTool.onMouseDown = function () {
+                if (this.selected == false) {
+                    console.log('hey there');
+                    this.selected = true;
+                } else this.selected = false;
+            };
+
+
+            for(i=0;i<addedObjects.length;i++){
+                var thenode = addedObjects[i];
+                var newnode = new Node(thenode[0],thenode[1],thenode[2],thenode[3]);
+                addednodes.push(newnode);
+
+                newnode.onMouseDown = function(){
+//                    if(this.owned == false) {
+//                        if (this.selected == false) {
+//                            this.selected = true
+//                        } else {
+//                            this.selected = false
+//                        }
+//                    }
+                   // console.log("selectedNodes:" + selectedNodes);
+                    //console.log("lines:" + linednodes);
+
+
+//                    if(connectTool.selected) {
+//                        if(selectedNodes.length == 0){
+//                            if(this.selected == true){
+//                                this.selected = false;
+//                                console.log("length==0");
+//                            }else if(this.selected == false){
+//                                this.selected = true;
+//                                selectedNodes.push(this);
+//                                console.log("length==1");
+//                            }
+//                            console.log("selectedNodes:" + selectedNodes);
+//
+//
+//                        }else if(selectedNodes.length==1) {
+//
+//                            if(this.selected == true){
+//                                this.selected = false;
+//                                console.log(selectedNodes.length)
+//                            }else if (this.selected == false) {
+//                                this.selected = true;
+//                                selectedNodes.push(this);
+//                                console.log("length==2");
+//
+//                            }
+//                            console.log('connecting');
+//                            connectNodes(selectedNodes[0], selectedNodes[1]);
+//                            linednodes.push([selectedNodes[0].id, selectedNodes[1].id]);
+//                            console.log("s:" + selectedNodes.length);
+//                            for (i = 0; i < selectedNodes; i++) {
+//                                selectedNodes[i].selected = false;
+//                            }
+//
+//                        }else if(selectedNodes.length == 2){
+//                            if(this.selected){
+//                                this.selected = false
+//                            }
+//                            selectedNodes = [];
+//                            console.log("length==0");
+//                        }
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//                    }else if(connectTool.selected == false){
+//
+//                        if(this.color == '#008000'){
+//                            for(i=0;i<linednodes.length;i++){
+//
+//
+//                                if( this.id == (linednodes[i])[0] || (linednodes[i])[1]){
+//                                    var lined0 = (linednodes[i])[0];
+//                                    var lined1 = (linednodes[i])[1];
+//
+//                                    for(f=0;f<addednodes.length;f++){
+//                                        if(addednodes[f].color == "#4286f4" && addednodes[f].selected) {
+//
+//                                            if (lined0 || lined1 == addednodes[f].id) {
+//                                                this.baseColor = "#4286f4";
+//                                                this.color = "#4286f4";
+//
+//
+//                                            }
+//                                        }
+//                                    }
+//                                }
+//
+//                            }
+//                        }
+//
+//
+//
+//
+//
+//                        if(this.color == "#df5767"){
+//                            if (this.selected == false) {
+//                                this.selected = true
+//                            } else {
+//                                this.selected = false
+//                            }
+//
+//                        }
+//
+//                        if(this.color == "#4286f4"){
+//
+//                            if (this.selected == false) {
+//                        c         this.selected = true
+//                            } else {
+//                                this.selected = false
+//                            }
+//
+//                        }
+//
+//
+//
+//                    }
+
+
+                }
+
+            }
+
+
+            function connectAllNodes(nodesArray) {
+                for (var i = 0; i < nodesArray.length - 1; i++) {
+                    addedObjects.push(connectNodes(nodesArray[i], nodesArray[i + 1]));
+                    // network.connections.push();
+                }
+            }
+
+
+            function countSelectedNodes(){
+                var selectedcount = 0;
+                for(i=0;i<addednodes.length;i++){
+                    if(addednodes[i].selected){selectedcount++}
+                }
+                return selectedcount;
+
+            }
+
+
+            function deselectNodes(nodes) {
+                for (var i = 0; i < nodes.length; i++) nodes[i].selected = false;
+            }
+
+
+            function getSelectedNodes() {
+                var selectedNodes = [];
+                for (var i = 0; i < addednodes.length; i++) {
+                    if (!(addednodes[i] instanceof Node)) continue; // only include Nodes
+                    if( addednodes[i].selected) selectedNodes.push(addednodes[i]);
+                }
+                return selectedNodes;
+            }
+//
+            function LineIsConnectedToNode(line, node) {
+                if (!(line instanceof Path)) return false;
+                if (!(node instanceof Node)) return false;
+                return (line.node1.id == node.id || line.node2.id == node.id);
+            }
+
+            function getConnectedPaths(node) {
+                if (!(node instanceof Node)) return [];
+
+                return getPaths().filter(function (path) {
+                    return LineIsConnectedToNode(path, node)
+                });
+            }
+            function getPaths() {
+                return addedObjects.filter(function (item) {
+                    return item instanceof Path
+                });
+//                var pathItems = [];
+//                for(i=0;i<addedObjects.length;i++){
+//                    if(addedObjects[i] instanceof Path){
+//                        pathItems.push(addedObjects[i]);;
+//                    }
+//                }
+//                return pathItems;
+            }
+
+            function isOwned(node) {
+                if (!(node instanceof Node)) return false;
+                return node.owned;
+            }
+
+
+            var hitOptions = {
+                //class: Path,
+                //segments: false,
+                stroke: true,
+                fill: true,
+                tolerance: 5
+            };
+
+
+
+
+
+
+
+
+
+
+            paper.view.onMouseDown = function (event) {
+                //console.log('tis working');
+                var hitResult = paper.project.hitTest(event.point, hitOptions);
+
+                if (hitResult) {                                    // Are we clicking on an existing object?
+                    var item;
+                    if (hitResult.item.parent instanceof Node) {    // Find either the Node or the Path object
+                        item = hitResult.item.parent;
+                    } else {
+                        item = hitResult.item;
+                    }
+
+
+
+                    if (item instanceof Node && (item !== connectTool)) {                     // Did we click on a Node?
+                        //item.selected = (!item.selected);
+                        console.log('this is working');
+                        if(item.selected){item.selected = false}else{
+                            item.selected = true;
+
+                        }
+
+                        if (connectTool.selected) {
+                            if (countSelectedNodes() > 1) {
+                                connectAllNodes(getSelectedNodes());
+                                deselectNodes(getSelectedNodes());
+                            }
+                        }
+                        if (!item.owned) {
+                            getConnectedPaths(item).forEach(function (line) {  // for each line that is connected to the clicked-on Node
+                                // TODO: Instead of testing all selected blue nodes, test the one node at the other end of the line
+
+                                getSelectedNodes().filter(isOwned).forEach(function (selectedBlueNode) {
+                                    var offense = selectedBlueNode.r;
+
+                                    if (LineIsConnectedToNode(line, selectedBlueNode)) { // the node is connected to the line
+
+                                        var health = item.r;
+                                        var brighter = false;
+                                        var tempColor = item.baseColor;
+                                        //clickedNode.targeted = true;
+
+                                        view.onFrame = function (event) {
+                                            // event.count is the number of times the frame event has been fired
+                                            if (event.count % 60 == 0) { // 60 frames per second
+
+                                                if (health > 0) {
+                                                    health -= 5;
+                                                }
+
+                                                if (health <= 0) {
+                                                    item.baseColor = "#4286f4"; // blue
+                                                    item.targeted = false;
+                                                }
+                                            } // end once_per_second
+
+                                            if (event.count % 1 == 0 && health > 0) {
+                                                //console.log(health, tempColor.toString(), tempColor.toCSS(), tempColor.brightness, brighter);
+
+                                                if (tempColor.brightness <= 0.45) {
+                                                    brighter = true;
+                                                } else if (tempColor.brightness >= 0.80) {
+                                                    brighter = false;
+                                                }
+
+                                                if (brighter == false) {
+                                                    tempColor.brightness -= 0.01;
+                                                } else if (brighter == true) {tempColor.brightness += 0.01;
+                                                }
+                                                item.baseColor = tempColor;
+
+                                            } // end 5_times_per_second
+                                        };//end onFrame
+
+
+                                    }
+                                    item.selected = false;
+                                });
+                            });
+                        }
+
+
+
+
+                    }
+
+
+                }
+
+            }
+
+
+
+
+
+        }; //end OnLoad
+
+
+    </script>
+
+
+</head>
+<body>
+<canvas id="myCanvas" resize></canvas>
+</body>
+</html>
+
+
+

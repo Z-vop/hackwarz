@@ -42,11 +42,14 @@
 <script src="/socket.io/socket.io.js"></script>
 <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
 <script>
-    var socket = io();
+    var socket = io('http://localhost:7000');
+
     $('form').submit(function () {
         var msg = $('#m').val();
         if(msg.startsWith('#')) {
             socket.emit('sync', msg.substring(1));
+        } else if(msg.startsWith('@')) {
+            socket.emit('action', JSON.parse(msg.substring(1)));
         } else {
             socket.emit('message', msg);
         }
@@ -68,7 +71,6 @@
     function logError(str) {
         $('#messages').append($('<p class="error_message"></p>').text(str));
     }
-
     socket.on('error_message', function (msg) {
         logError(msg);
         updateScroll();
@@ -85,7 +87,7 @@
     });
 
     socket.on('sync', function (msg) {
-        log("sync: " + msg);
+        log("sync: " + JSON.stringify(msg));
         updateScroll();
     });
 

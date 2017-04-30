@@ -13,15 +13,17 @@ var Connection = require('./lib/Connection');
 var Network = require('./lib/Network');
 
 var network = new Network();
+
+import makeStore from './src/store';
+const store = makeStore();
+
+// This is a list of the currently logged in users
 var users = new Map();
 users.sanitize = function() {
-    // Sanitize the user array
-    var users_sub = [];
-    this.forEach(function(value) {
-        var new_user = { name: value.name, color: value.color, level: value.level, coins: value.coins }
-        users_sub.push(new_user);
-    });
-    return users_sub;
+    // Sanitize the user Map, return an Array
+    return Array.from(this.values()).map(function(user) {
+        return { name: user.name, color: user.color, level: user.level, coins: user.coins };
+    })
 }
 
 // When a user connects, everything in this function is called per user/socket
@@ -38,12 +40,12 @@ io.on('connection', function(socket){
 
     // A new user has connected
     console.log('A user connected. Socket #' + socket.id);
-    write("Welcome to Hackwarz. Please login using /user [name]");
+    write("Connected.");
 
     socket.on('message', function(msg) {
 
         // parse the command arguments into an array for easy access.
-        var argv = [];                          // argv[0] is the command itself.
+        var argv = [];              // argv[0] is the command itself.
         argv = msg.split(' ');
         console.log(argv);
 
@@ -64,13 +66,10 @@ io.on('connection', function(socket){
                     return;
                 }
                 // Be sure user is not already logged in
-                users.forEach(function(user_obj, key) {
-                    if(username == user_obj.name) {
-                        socket.emit('error_message', "User is already logged in from another device.");
-                        // TODO: This return statement is not working somehow
-                        return;
-                    };
-                });
+                if(users.sanitize().some(function(user_obj, key) { return username == user_obj.name }) == true) {
+                    socket.emit('error_message', "User is already logged in from another device.");
+                    return;
+                }
 
                 // Look up user in db
                 db.find({name: username}, function (err, docs) {
@@ -88,7 +87,6 @@ io.on('connection', function(socket){
                         }
                         // The password is a match, set the user object
                         user = new User(u);
-                        write("Welcome back.");
                     } else {
                         // Otherwise we have a new user name
                         console.log("No user found in DB");
@@ -127,6 +125,7 @@ io.on('connection', function(socket){
         }
     }); // end-on message
 
+
     socket.on('sync', function(msg) {
         console.log("got sync message: " + msg);
         switch (msg) {
@@ -134,9 +133,18 @@ io.on('connection', function(socket){
                 socket.emit("sync", JSON.stringify(users.sanitize()));
                 break;
             case "all":
-                socket.emit("sync", _json);
+                socket.emit('sync', store.getState().toJS());
                 break;
         };
+    });
+
+    socket.on('action', function(action) {
+        console.log(action);
+        try {
+            store.dispatch(action);
+        } catch(e) {
+            console.log("Error with action: " + e);
+        }
     });
 
     socket.on('chat', function(msg) {
@@ -190,21 +198,20 @@ http.listen(7000, function(){
     console.log('listening on *:7000');
 });
 
+store.subscribe(
+    () => io.emit('sync', store.getState().toJS())
+);
+
 // This just serves up the web game UI
 app.get('/', function(req, res){
     res.sendFile(__dirname + '/index.html');
 });
 
 
-node1 = new Node({description: "node1", x: 100, y: 100,baseColor:'red'});
-node2 = new Node({description: "node2", x: 300, y: 100});
-node3 = new Node({description: "node3", x: 500, y: 100, r: 40, defense: 200});
-network.nodes.push(node1);
-network.nodes.push(node2);
-network.nodes.push(node3);
-network.connectNodes(node1, node2);
-network.connectNodes(node2, node3);
-var _json = network.json;
+store.dispatch({type: "ADD_NODE", node: {description: "node1", x: 100, y: 100,baseColor:'red'}});
+store.dispatch({type: "ADD_NODE", node: {description: "node2", x: 300, y: 100}});
+store.dispatch({type: "ADD_NODE", node: {description: "node3", x: 500, y: 100, r: 40, defense: 200}});
+
 
 
 

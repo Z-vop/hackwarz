@@ -1,20 +1,12 @@
-/**
- * Created by oliver on 4/2/17.
- */
 // ## Hacknode Drawing Functions ## //
 paper.install(window);
 
 function Node(x, y, r, c) {
 
-
     this.name = "Node at " + x + "," + y + " with color " + c;
-    this.x = x;
-    this.y = y;
-    this.color = c;
-    this.r = r;
 
-    var _health = 100;
-    var owned = false;
+    var _health = 0;
+    var _owner = 0; // integer, 0 = no owner
     var w = 15; // border width
 
     var outerNode = new Path.Circle({
@@ -71,7 +63,7 @@ function Node(x, y, r, c) {
     // Make the targeting circle and hide it
     var targetCircle = new Path.Circle({
         center: new Point(x, y),
-        radius: r,
+        radius: r + w,
         strokeColor: 'orange',
         strokeWidth: 3,
         shadowColor: 'orange',
@@ -82,15 +74,33 @@ function Node(x, y, r, c) {
 
     Group.call(this, [outerNode, innerNode, arcNode, damageText, selectNode, targetCircle, mouseTarget]);
 
-    // ACCESSORS
 
-    Object.defineProperty(this, "owned", {
+    // ACCESSORS
+    Object.defineProperty(this, "owner", {
         get: function () {
-            return owned;
+            return _owner;
         },
-        set: function (_bool) {
-            owned = _bool;
-            if(owned) { setBaseColor('#4286f4') };
+        set: function (owner) {
+            _owner = owner;
+            switch(_owner) {
+                case 1:
+                    // Owner 1: set the node color to blue
+                    setBaseColor('#4286f4')
+                    break;
+                case 2:
+                    // Owner 2: set the node color to red
+                    setBaseColor('#df5767')
+                    break;
+                default:
+                    // Set the node color to green
+                    setBaseColor('green')
+            }
+        }
+    });
+    Object.defineProperty(this, "owned", {
+        // The notion of 'owned' is whether there is an owner
+        get: function () {
+            return _owner !== 0;
         }
     });
     Object.defineProperty(this, "selected", {
@@ -103,10 +113,10 @@ function Node(x, y, r, c) {
     });
     Object.defineProperty(this, "targeted", {
         get: function () {
-            return targetNode.visible;
+            return targetCircle.visible;
         },
         set: function (_targeted) {
-            targetNode.visible = _targeted;
+            targetCircle.visible = _targeted;
         }
     });
     Object.defineProperty(this, "health", {
@@ -115,7 +125,8 @@ function Node(x, y, r, c) {
         },
         set: function (amount) {
             _health = amount;
-            damageText.content = _health;
+            if(_health <= 0) damageText.content = ""
+            else damageText.content = _health;
         }
     });
     Object.defineProperty(this, "baseColor", {
@@ -175,9 +186,6 @@ Node.prototype.isSelectable = function () {
 
 function connectNodes(node1, node2) {
     // TODO: Need to make lines an object type
-    console.log(node1, node2)
-
-
     var line = new Path();
     line.name = 'line';
     line.sendToBack();
@@ -189,6 +197,7 @@ function connectNodes(node1, node2) {
     line.node1 = node1;
     line.node2 = node2;
     return line;
+    // TODO: Add a Network object to the graphics lib and manage it within the library
 }
 
 

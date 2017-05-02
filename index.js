@@ -208,7 +208,7 @@ app.get('/', function(req, res){
 });
 
 
-store.dispatch({type: "ADD_NODE", node: {description: "node1", x: 100, y: 100,baseColor:'red'}});
+store.dispatch({type: "ADD_NODE", node: {description: "node1", x: 100, y: 100, owner: 1}});
 store.dispatch({type: "ADD_NODE", node: {description: "node2", x: 300, y: 100}});
 store.dispatch({type: "ADD_NODE", node: {description: "node3", x: 500, y: 100, r: 40, defense: 200}});
 

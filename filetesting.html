@@ -89,6 +89,8 @@
             }
 
 
+
+
             paper.view.onMouseDown = function (event) {
                 var hitOptions = {
                     //class: Path,
@@ -131,7 +133,13 @@
                                     // TODO: Need to make attacks more sophisticated
                                     // We need to just note the line where an attack is happening, and then process the
                                     // attacks somewhere else in the onFrame event probably.
-                                    clickedNode.owner = connectedNode.owner;
+
+                                    //here we are coding the capturing proccess
+
+
+                                    capturing(connectedNode,clickedNode);
+
+
                                     connectedNode.selected = false;
                                     clickedNode.selected = false;
                                 }
@@ -175,6 +183,28 @@
 //        };//end onFrame
 
         /* COMMON FUNCTIONS */
+
+
+
+
+        function capturing(attacker,target){
+            var health = target.r;
+            var strength = (attacker.r/10)
+
+            while(health > 0) {
+                view.onFrame = function (event) {
+                    if ((event % 10) == 0) {
+                        health -= strength;
+
+                        if (health == 0) {
+
+                            target.owner = attacker.owner;
+
+                        }
+                    }
+                };
+            }
+        }
 
         // Return true if the node has an owner
         function isOwned(node) {

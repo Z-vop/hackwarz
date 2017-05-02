@@ -11,8 +11,7 @@ var Node = require('../lib/Node');
 var node1 = {
     id: 1,
     health: 200,
-    power: 20,
-    baseColor: '#4286f4'
+    power: 20
 }
 
 describe('Test Nodes', function () {

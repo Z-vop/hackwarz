@@ -13,7 +13,11 @@ describe('store', () => {
     it('is a Redux store configured with the correct reducer', () => {
         const store = makeStore();
         const state1 = store.getState();
-        const state2 = INITIAL_STATE();
+        const state2 = fromJS({
+            nextId: 1,
+            nodes: [],
+            connections: []
+        });
 
         expect(state1.description).to.equal(state2.description); /* TODO: Can't compare whole state because of ID #s */
     });

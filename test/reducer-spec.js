@@ -9,29 +9,27 @@ import reducer from '../src/reducer';
 
 /* Sample data */
 const network1 = {
-    id: "efd5d81d75b3",
-    description: "GenericNetwork",
+    nextId: 1,
     nodes: [
-        {id: "a904461af54a", description: "node1", r: 30, baseColor: "red", x: 100, y: 100},
-        {id: "780bfa02043f", description: "node2", r: 30, baseColor: "#e8e8e8", x: 300, y: 100}
+        {id: 1, r: 30, x: 100, y: 100},
+        {id: 2, r: 30, x: 300, y: 100}
     ],
     connections: [
-        {id: "53919a1a5edf", description: "conn1", color: "#154811", node1: "a904461af54a", node2: "780bfa02043f"}
+        {id: 5, node1:1, node2: 2}
     ]
 };
-const node3 = {id: "5cf36248305d", description: "node3", defense: 100, attack: 10, r: 40, baseColor: "#e8e8e8", owner: 0, x: 500, y: 100 } ;
-const conn2 = {id: "55430f22722d", description: "conn2", color: "#154811", node1: "780bfa02043f", node2: "5cf36248305d" };
+const node3 = {id: 3, defense: 100, attack: 10, r: 40, x: 500, y: 100 } ;
+const conn2 = {id: 6, node1: 2, node2: 3 };
 const network2 = {
-    id: "efd5d81d75b3",
-    description: "GenericNetwork",
+    nextId: 1,
     nodes: [
-        {id: "a904461af54a", description: "node1", r: 30, baseColor: "red", x: 100, y: 100},
-        {id: "780bfa02043f", description: "node2", r: 30, baseColor: "#e8e8e8", x: 300, y: 100},
-        {id: "5cf36248305d", description: "node3", defense: 100, attack: 10, r: 40, baseColor: "#e8e8e8", owner: 0, x: 500, y: 100 }
+        {id: 1, r: 30, x: 100, y: 100},
+        {id: 2, r: 30, x: 300, y: 100},
+        {id: 3, defense: 100, attack: 10, r: 40, x: 500, y: 100, owner: 0 }
     ],
     connections: [
-        {id: "53919a1a5edf", description: "conn1", color: "#154811", node1: "a904461af54a", node2: "780bfa02043f"},
-        {id: "55430f22722d", description: "conn2", color: "#154811", node1: "780bfa02043f", node2: "5cf36248305d" }
+        {id: 5, node1:1, node2: 2},
+        {id: 6, node1: 2, node2: 3 }
     ]
 };
 
@@ -56,15 +54,14 @@ describe('reducer', () => {
         const action = {type: 'ADD_CONNECTION', connection: conn2 };
         const nextState = reducer(initialState, action);
         const expectedState = fromJS({
-            id: "efd5d81d75b3",
-            description: "GenericNetwork",
+            nextId: 1,
             nodes: [
-                {id: "a904461af54a", description: "node1", r: 30, baseColor: "red", x: 100, y: 100},
-                {id: "780bfa02043f", description: "node2", r: 30, baseColor: "#e8e8e8", x: 300, y: 100}
+                {id: 1, r: 30, x: 100, y: 100},
+                {id: 2, r: 30, x: 300, y: 100}
             ],
             connections: [
-                { id: "53919a1a5edf", description: "conn1", color: "#154811", node1: "a904461af54a", node2: "780bfa02043f"},
-                { id: "55430f22722d", description: "conn2", color: "#154811", node1: "780bfa02043f", node2: "5cf36248305d"}
+                {id: 5, node1:1, node2: 2},
+                {id: 6, node1: 2, node2: 3 }
             ]
         })
         expect(nextState).to.equal(expectedState);

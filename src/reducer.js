@@ -1,16 +1,13 @@
 
 import {fromJS, List, Map} from 'immutable';
 
-function INITIAL_STATE() {
-    return fromJS({
+const INITIAL_STATE = fromJS({
         nextId: 1,
         nodes: [],
         connections: []
     });
-};
 
-function DEFAULT_NODE() {
-    return fromJS({
+const DEFAULT_NODE = fromJS({
         id: 0,
         defense: 100,
         attack: 10,
@@ -18,19 +15,19 @@ function DEFAULT_NODE() {
         y: 100,
         r: 30,
         owner: 0
-    })
-}
+    });
 
-export default function reducer(initialState = INITIAL_STATE(), action) {
+export default function reducer(initialState = INITIAL_STATE, action) {
 
-    const state = INITIAL_STATE().merge(initialState);
+    // ensure that the state has minimum set of properties
+    const state = INITIAL_STATE.merge(initialState);
 
     switch (action.type) {
         case 'SET_NETWORK':
             return state.merge(action.network);
 
         case 'ADD_NODE':
-            const node = DEFAULT_NODE().merge(action.node);
+            const node = DEFAULT_NODE.merge(action.node);
             const nodes = state.get('nodes');
             const new_nodes = nodes.push(Map(node));
             return state.merge({nodes: new_nodes});

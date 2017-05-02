@@ -126,7 +126,7 @@ function Node(x, y, r, c) {
         set: function (amount) {
             _health = amount;
             if(_health <= 0) damageText.content = ""
-            else damageText.content = _health;
+            else damageText.content = _health.toString();
         }
     });
     Object.defineProperty(this, "baseColor", {

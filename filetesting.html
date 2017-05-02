@@ -29,6 +29,7 @@
         var addedObjects = [];
 
 
+
         window.onload = function () {
 
             var canvas = document.getElementById('myCanvas');
@@ -71,6 +72,8 @@
                 [260, 87, 25, 1],   // blue nodes
                 [261, 300, 25, 1],
                 [260, 559, 25, 1]];
+            var attackdata = [];
+
 
             // This tool allows us to draw lines between nodes
             connectTool = new Node(150, 330, 10, "#f49542");
@@ -129,17 +132,9 @@
                                 var connectedNode = (clickedNode.id == line.node1.id) ? line.node2 : line.node1;
                                 // If the node is owned and selected
                                 if (connectedNode.owned && connectedNode.selected) {
-                                    // Attack is successful, change node color
-                                    // TODO: Need to make attacks more sophisticated
-                                    // We need to just note the line where an attack is happening, and then process the
-                                    // attacks somewhere else in the onFrame event probably.
-
-                                    //here we are coding the capturing proccess
-
-
-                                    capturing(connectedNode,clickedNode);
-
-
+                                    // Record the attack
+                                    clickedNode.health = 100;
+                                    attackdata.push({attackNode: connectedNode, targetNode: clickedNode});
                                     connectedNode.selected = false;
                                     clickedNode.selected = false;
                                 }
@@ -147,64 +142,75 @@
                         } // END clicked node not owned
                     } // END clicked a Node
                 } // END hit result
-            } // END mouseDown
+            }; // END mouseDown
+
+            view.onFrame = function (event) {
+                // event.count is the number of times the frame event has been fired
+                if (event.count % 20 == 0) { // 60 frames per second
+
+                    for(i=0;i<attackdata.length;i++){
+                        var attack = attackdata[i];
+                        var targetNode = attack.targetNode;
+                        var attackNode = attack.attackNode;
+                        var strength = 5;
+
+                        if(targetNode.owner !== attackNode.owner) {
+
+                            if (targetNode.health > 0) {
+                                targetNode.health -= strength;
+                            }
+
+                            if (targetNode.health <= 0) {
+                                targetNode.health = 0;
+                                targetNode.owner = attackNode.owner;
+                            }
+                        }
+                    }
+                } // end once_per_second
+
+//                if (event.count % 1 == 0 && health > 0) {
+//                    //console.log(health, tempColor.toString(), tempColor.toCSS(), tempColor.brightness, brighter);
+//
+//                    if (tempColor.brightness <= 0.45) {
+//                        brighter = true;
+//                    } else if (tempColor.brightness >= 0.80) {
+//                        brighter = false;
+//                    }
+//
+//                    if (brighter == false) {
+//                        tempColor.brightness -= 0.01;
+//                    } else if (brighter == true) {
+//                        tempColor.brightness += 0.01;
+//                    }
+//                    item.baseColor = tempColor;
+//
+//                } // end 5_times_per_second
+            };//end onFrame
+
         }; //END OnLoad
 
-//        view.onFrame = function (event) {
-//            // event.count is the number of times the frame event has been fired
-//            if (event.count % 60 == 0) { // 60 frames per second
-//
-//                if (health > 0) {
-//                    health -= 5;
-//                }
-//
-//                if (health <= 0) {
-//                    item.baseColor = "#4286f4"; // blue
-//                    item.targeted = false;
-//                }
-//            } // end once_per_second
-//
-//            if (event.count % 1 == 0 && health > 0) {
-//                //console.log(health, tempColor.toString(), tempColor.toCSS(), tempColor.brightness, brighter);
-//
-//                if (tempColor.brightness <= 0.45) {
-//                    brighter = true;
-//                } else if (tempColor.brightness >= 0.80) {
-//                    brighter = false;
-//                }
-//
-//                if (brighter == false) {
-//                    tempColor.brightness -= 0.01;
-//                } else if (brighter == true) {tempColor.brightness += 0.01;
-//                }
-//                item.baseColor = tempColor;
-//
-//            } // end 5_times_per_second
-//        };//end onFrame
+
 
         /* COMMON FUNCTIONS */
 
-
-
-
-        function capturing(attacker,target){
-            var health = target.r;
-            var strength = (attacker.r/10)
-
-            while(health > 0) {
-                view.onFrame = function (event) {
-                    if ((event % 10) == 0) {
-                        health -= strength;
-
-                        if (health == 0) {
-
-                            target.owner = attacker.owner;
-
-                        }
-                    }
-                };
-            }
-        }
+//        function capturing(attacker,target){
+//            var health = target.r;
+//            var strength = (attacker.r/10)
+//
+//            while(health > 0) {
+//                view.onFrame = function (event) {
+//                    if ((event % 10) == 0) {
+//                        health -= strength;
+//
+//                        if (health == 0) {
+//
+//                            target.owner = attacker.owner;
+//
+//                        }
+//                    }
+//                };
+//            }
+//        }
 
         // Return true if the node has an owner
         function isOwned(node) {

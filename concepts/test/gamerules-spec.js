@@ -100,6 +100,7 @@ describe('Test nodesUnderAttack', function(){
 
 describe('Test reduceAttacksToValues', function() {
     it("should reduce attacks to attack values per user", function() {
+        // attackValuesArray = reduceAttacksToValues(attacks)
         reduceAttacksToValues(attacks1).should.deep.equal(attackValues1);
     })
     it("should reduce multiple user attacks to one attack value per user", function() {
@@ -107,21 +108,42 @@ describe('Test reduceAttacksToValues', function() {
     })
 });
 
-
+// This is how the green_node should look when the attack1 begins
 var green_node_at_begin_attack = {
     id: 2,
     health: 0,
     size: 40,
     owner: 0,
-    owner1health: 30,
+    owner1health: 40,
     owner2health: 40
 }
 
 describe('Test beginAttack', function() {
     it("should return target node with the owner healths to starting values", function() {
+        // newNode = beginAttack(attacks)
         beginAttack(attacks1).should.deep.equal(green_node_at_begin_attack);
     })
 })
+
+// This is how the green node should look after one attack cycle (onFrame cycle)
+var green_node_after_one_cycle = {
+    id: 2,
+    health: 0,
+    size: 40,
+    owner: 0,
+    owner1health: 37,
+    owner2health: 36
+};
+
+describe('Test applyAttackCycle', function() {
+    it("should adjust the node health based on the attack values", function() {
+        // newNode = applyAttackCycle(attackValues)
+        reduceAttacksToValues(attacks1).should.deep.equal(green_node_after_one_cycle);
+        // TODO: What should the displayed node health be?
+    })
+})
+
+
 
 
 

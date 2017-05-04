@@ -37,7 +37,7 @@
             view.draw();
 
             // x, y, radius, owner
-            var networkData =  [
+            var networkData = [
                 [780, 337, 95, 0],
                 [763, 142, 35, 0],
                 [891, 186, 35, 0],
@@ -84,14 +84,13 @@
             };
 
             // Draws the network map from the array
-            for(i=0;i<networkData.length;i++){
+            for (i = 0; i < networkData.length; i++) {
                 var thenode = networkData[i];
-                var newnode = new Node(thenode[0],thenode[1],thenode[2],'grey');
+                var newnode = new Node(thenode[0], thenode[1], thenode[2], 'grey');
                 newnode.owner = thenode[3];
+                newnode.r = thenode[2];
                 addedObjects.push(newnode);
             }
-
-
 
 
             paper.view.onMouseDown = function (event) {
@@ -113,7 +112,6 @@
                     }
 
 
-
                     if (item instanceof Node && (item !== connectTool)) {                     // Did we click on a Node?
                         const clickedNode = item;  // just to make code clearer
                         item.selected = (!clickedNode.selected);
@@ -124,8 +122,9 @@
                                 deselectNodes(getSelectedNodes());
                             }
                         }
+                        //console.log(item.r);
 
-                        if (true /*!clickedNode.owned*/) {   // They clicked on a green node
+                        if (!clickedNode.owned) {   // They clicked on a green node
                             getConnectedPaths(clickedNode).forEach(function (line) {  // for each line that is connected to the clicked-on Node
                                 // Test the node at the end of each line
                                 // Find out whether the other node is node1 or node2
@@ -133,10 +132,15 @@
                                 // If the node is owned and selected
                                 if (connectedNode.owned && connectedNode.selected) {
                                     // Record the attack
-                                    clickedNode.health = 100;
-                                    attackdata.push({attackNode: connectedNode, targetNode: clickedNode});
+
+                                    if (attackInProgress(attackdata, connectedNode, clickedNode) == false) {
+                                        clickedNode.health = clickedNode.r;
+                                        attackdata.push({attackNode: connectedNode, targetNode: clickedNode});
+                                    }
+
                                     connectedNode.selected = false;
                                     clickedNode.selected = false;
+                                    //console.log(clickedNode.r);
                                 }
                             }); // END each connected line
                         } // END clicked node not owned
@@ -148,23 +152,35 @@
                 // event.count is the number of times the frame event has been fired
                 if (event.count % 20 == 0) { // 60 frames per second
 
-                    for(i=0;i<attackdata.length;i++){
+                    for (i = 0; i < attackdata.length; i++) {
                         var attack = attackdata[i];
                         var targetNode = attack.targetNode;
                         var attackNode = attack.attackNode;
-                        var strength = 5;
+                        var strength = attackNode.r / 4;
+                        var health = targetNode.r;
 
-                        if(targetNode.owner !== attackNode.owner) {
+                        if(cancelling(attackNode,targetNode) == number){}
 
-                            if (targetNode.health > 0) {
-                                targetNode.health -= strength;
-                            }
-
-                            if (targetNode.health <= 0) {
-                                targetNode.health = 0;
-                                targetNode.owner = attackNode.owner;
-                            }
+                        if(cancelling(attackNode,targetNode) == -(number)){
+                            number
                         }
+
+
+//
+//
+//                        if (targetNode.owner !== attackNode.owner) {
+//
+//                            if (targetNode.health > 0) {
+//                                targetNode.health -= strength;
+//                            }
+//
+//                            if (targetNode.health <= 0) {
+//                                targetNode.health = 0;
+//                                targetNode.owner = attackNode.owner;
+//                            }
+//
+//
+//                        }
                     }
                 } // end once_per_second
 
@@ -193,29 +209,83 @@
 
         /* COMMON FUNCTIONS */
 
-//        function capturing(attacker,target){
-//            var health = target.r;
-//            var strength = (attacker.r/10)
-//
-//            while(health > 0) {
-//                view.onFrame = function (event) {
-//                    if ((event % 10) == 0) {
-//                        health -= strength;
-//
-//                        if (health == 0) {
-//
-//                            target.owner = attacker.owner;
-//
-//                        }
-//                    }
-//                };
-//            }
-//        }
+        //        function capturing(attacker,target){
+        //            var health = target.r;
+        //            var strength = (attacker.r/10)
+        //
+        //            while(health > 0) {
+        //                view.onFrame = function (event) {
+        //                    if ((event % 10) == 0) {
+        //                        health -= strength;
+        //
+        //                        if (health == 0) {
+        //
+        //                            target.owner = attacker.owner;
+        //
+        //                        }
+        //                    }
+        //                };
+        //            }
+        //        }
+
+        // Returns true if the attack and target Nodes are already in the attackList
+        function attackInProgress(attackList, attacker, target) {
+            return attackList.filter((a) => a.targetNode.id === target.id).filter((a) => a.attackNode.id === attacker.id).length !== 0;
+        }
+
+        // TODO: Put this test into the test suite
+        function test_attackInProgress() {
+            attacks = [{attackNode: {id: 1}, targetNode: {id: 2}}, {
+                attackNode: {id: 1},
+                targetNode: {id: 2}
+            }, {attackNode: {id: 3}, targetNode: {id: 4}}];
+            console.log("test attackInProgress: ",
+                attackInProgress(attacks, {id: 1}, {id: 2}) === true ? "pass" : "fail",
+                attackInProgress(attacks, {id: 2}, {id: 3}) === false ? "pass" : "fail"
+            )
+        }
+        ;
+        // test_attackInProgress(); // Uncomment to run test
+
 
         // Return true if the node has an owner
         function isOwned(node) {
             if (!(node instanceof Node)) return false;
             return node.owned;
+        }
+
+        function cancelling(attackingNode,targetNode){
+            for(i=0;i<attackdata.length;i++){
+                var redattack = 0;
+                var blueattack = 0;
+                if((attackdata[i])[1] == targetNode){
+
+                    if((attackdata[i])[0] == "red"){
+                        redattack += (((attackdata[i])[1]).r/4);
+
+                    }
+
+                    if((attackdata[i])[0] == "blue"){
+                        blueattack += (((attackdata[i])[1]).r/4);
+
+                    }
+
+                    var offensive = (redattack)-(blueattack);
+
+                    if(offensive > 0){
+                     return offensive;
+
+                    }else if(offensive < 0){
+                      return offensive;
+                    }
+
+
+
+
+
+
+                }
+            }
         }
 
         // Return an array of all Nodes

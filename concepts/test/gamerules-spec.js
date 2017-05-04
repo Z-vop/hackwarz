@@ -12,35 +12,39 @@ import {attackInProgress, nodesUnderAttack} from '../gamerules'
 
 var blue_node = {
     id: 1,
-    health: 100,
+    health: 0,
     size: 30,
     owner: 1,
-    lead_attacker: 0
+    owner1health: 0,
+    owner2health: 0
 }
 
 var blue_node2 = {
     id: 4,
-    health: 100,
-    size: 30,
+    health: 0,
+    size: 50,
     owner: 1,
-    lead_attacker: 0
+    owner1health: 0,
+    owner2health: 0
 }
 
 var green_node = {
     id: 2,
-    health: 100,
+    health: 0,
     size: 40,
     owner: 0,
-    lead_attacker: 0
+    owner1health: 0,
+    owner2health: 0
 }
 
 var red_node = {
     id: 3,
-    health: 100,
+    health: 0,
     size: 40,
     owner: 2,
-    lead_attacker: 0
-}
+    owner1health: 0,
+    owner2health: 0
+};
 
 var attacks1 = [
     {attackNode: blue_node, targetNode: green_node},
@@ -48,14 +52,19 @@ var attacks1 = [
 ];
 
 var attackValues1 = [
-    {attacker: 1, attackPower: 3},
-    {attacker: 2, attackPower: 4}
+    {attacker: 1, attackPower: 3}, // blue
+    {attacker: 2, attackPower: 4}  // red
 ];
 
 var attacks2 = [
     {attackNode: blue_node, targetNode: green_node},
     {attackNode: red_node, targetNode: green_node},
     {attackNode: blue_node2, targetNode: green_node}
+];
+
+var attackValues2 = [
+    {attacker: 1, attackPower: 8}, // blue
+    {attacker: 2, attackPower: 4}  // red
 ];
 
 var attacks3 = [
@@ -86,6 +95,31 @@ describe('Test nodesUnderAttack', function(){
     var nodeList2 = [green_node, red_node];
     it("should return two nodes if two nodes are under attack", function() {
         expect(nodesUnderAttack(attacks3)).to.deep.equal(nodeList2);
+    })
+});
+
+describe('Test reduceAttacksToValues', function() {
+    it("should reduce attacks to attack values per user", function() {
+        reduceAttacksToValues(attacks1).should.deep.equal(attackValues1);
+    })
+    it("should reduce multiple user attacks to one attack value per user", function() {
+        reduceAttacksToValues(attacks2).should.deep.equal(attackValues2);
+    })
+});
+
+
+var green_node_at_begin_attack = {
+    id: 2,
+    health: 0,
+    size: 40,
+    owner: 0,
+    owner1health: 30,
+    owner2health: 40
+}
+
+describe('Test beginAttack', function() {
+    it("should return target node with the owner healths to starting values", function() {
+        beginAttack(attacks1).should.deep.equal(green_node_at_begin_attack);
     })
 })
 

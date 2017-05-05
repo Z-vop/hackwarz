@@ -23,7 +23,7 @@
     "nodes" : [
       {
         "id" : "a904461af54a",
-        "r" : 30,
+        "size": 30,
         "baseColor" : "red",
         "owner" : 0,
         "x" : 100,
@@ -33,7 +33,7 @@
       },
       {
         "id" : "780bfa02043f",
-        "r" : 30,
+        "size": 30,
         "baseColor" : "#e8e8e8",
         "owner" : 0,
         "x" : 300,
@@ -43,7 +43,7 @@
       },
       {
         "id" : "5cf36248305d",
-        "r" : 40,
+        "size": 40,
         "baseColor" : "#e8e8e8",
         "owner" : 0,
         "x" : 500,

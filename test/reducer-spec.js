@@ -11,8 +11,8 @@ import reducer from '../src/reducer';
 const network1 = {
     nextId: 1,
     nodes: [
-        {id: 1, r: 30, x: 100, y: 100},
-        {id: 2, r: 30, x: 300, y: 100}
+        {id: 1, size: 30, x: 100, y: 100},
+        {id: 2, size: 30, x: 300, y: 100}
     ],
     connections: [
         {id: 5, node1:1, node2: 2}
@@ -23,9 +23,9 @@ const conn2 = {id: 6, node1: 2, node2: 3 };
 const network2 = {
     nextId: 1,
     nodes: [
-        {id: 1, r: 30, x: 100, y: 100},
-        {id: 2, r: 30, x: 300, y: 100},
-        {id: 3, defense: 100, attack: 10, r: 40, x: 500, y: 100, owner: 0 }
+        {id: 1, size: 30, x: 100, y: 100},
+        {id: 2, size: 30, x: 300, y: 100},
+        {id: 3, defense: 100, attack: 10, size: 40, x: 500, y: 100, owner: 0 }
     ],
     connections: [
         {id: 5, node1:1, node2: 2},
@@ -56,8 +56,8 @@ describe('reducer', () => {
         const expectedState = fromJS({
             nextId: 1,
             nodes: [
-                {id: 1, r: 30, x: 100, y: 100},
-                {id: 2, r: 30, x: 300, y: 100}
+                {id: 1, size: 30, x: 100, y: 100},
+                {id: 2, size: 30, x: 300, y: 100}
             ],
             connections: [
                 {id: 5, node1:1, node2: 2},

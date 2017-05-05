@@ -88,7 +88,10 @@
                 var thenode = networkData[i];
                 var newnode = new Node(thenode[0], thenode[1], thenode[2], 'grey');
                 newnode.owner = thenode[3];
-                newnode.r = thenode[2];
+                newnode.size = thenode[2];
+                newnode.health = newnode.size;
+                newnode.owner1health = newnode.size;
+                newnode.owner2health = newnode.size;
                 addedObjects.push(newnode);
             }
 
@@ -122,7 +125,7 @@
                                 deselectNodes(getSelectedNodes());
                             }
                         }
-                        //console.log(item.r);
+                        //console.log(item.size);
 
                         if (!clickedNode.owned) {   // They clicked on a green node
                             getConnectedPaths(clickedNode).forEach(function (line) {  // for each line that is connected to the clicked-on Node
@@ -134,13 +137,13 @@
                                     // Record the attack
 
                                     if (attackInProgress(attackdata, connectedNode, clickedNode) == false) {
-                                        clickedNode.health = clickedNode.r;
+
                                         attackdata.push({attackNode: connectedNode, targetNode: clickedNode});
                                     }
 
                                     connectedNode.selected = false;
                                     clickedNode.selected = false;
-                                    //console.log(clickedNode.r);
+                                    //console.log(clickedNode.size);
                                 }
                             }); // END each connected line
                         } // END clicked node not owned
@@ -150,33 +153,105 @@
 
             view.onFrame = function (event) {
                 // event.count is the number of times the frame event has been fired
-                if (event.count % 20 == 0) { // 60 frames per second
+                if (event.count % 100 == 0) { // 60 frames per second
 
                     for (i = 0; i < attackdata.length; i++) {
-                        var attack = attackdata[i];
-                        var targetNode = attack.targetNode;
-                        var attackNode = attack.attackNode;
-                        var strength = attackNode.r / 4;
-                        var health = targetNode.r;
+                        var z = attackdata[i];
+                        var attackNode = z.attackNode;
+                        var targetNode = z.targetNode;
 
-                        if(cancelling(attackNode,targetNode) == number){}
 
-                        if(cancelling(attackNode,targetNode) == -(number)){
-                            number
+                        function reduceAttacksToValues(Anode,Tnode){
+                            var NumberOfAttacks = array.length;
+                            var owner1attack = 0;
+                            var owner2attack = 1;
+
+                            if((z[0]== Anode) && (z[1] == Tnode)) {
+                                for (var n = 0; n < array.length; n++) {
+
+                                    if ((array[n])[0].owner == 0) {
+                                        owner1attack += (array[n][0].size / 10);
+
+                                    }
+
+                                    if ((array[n])[0].owner = 1) {
+                                        owner2attack += (array[n][0].size / 10);
+                                    }
+
+                                }
+                                return owner2attack;
+                                return owner2attack;
+                            }
                         }
 
 
+
+
+
+
+                            var strength = attackNode.size / 5;
+
+
+
+                            //seeing which owner it belongs to to determine which health to attack
+
+                            if (attackNode.owner == 1) {
+                                console.log('blue');
+                                if (targetNode.owner1health > 0) {
+                                    targetNode.owner1health -= strength;
+                                    console.log(targetNode.owner1health);
+                                }
+
+
+                                if (targetNode.owner1health <= 0) {
+                                    targetNode.targeted = false;
+                                    targetNode.owner1health = targetNode.size;
+                                    targetNode.owner2health = targetNode.size
+                                    targetNode.owner = attackNode.owner;
+
+
+
+                                }
+
+                            }
+
+
+                            if (attackNode.owner == 2) {
+                                console.log('red');
+                                if (targetNode.owner2health > 0) {
+                                    targetNode.owner2health -= strength;
+                                    console.log(targetNode.owner2health);
+                                }
+
+
+                                if (targetNode.owner2health <= 0) {
+                                    targetNode.targeted = false;
+
+                                    targetNode.owner2health = targetNode.size;
+                                    targetNode.owner1health = targetNode.size
+                                    targetNode.owner = attackNode.owner;
+
+
+
+                                }
+                            }
+
+
 //
-//
+////
 //                        if (targetNode.owner !== attackNode.owner) {
 //
-//                            if (targetNode.health > 0) {
-//                                targetNode.health -= strength;
+//                            if (ownerhealth > 0) {
+//                                ownerhealth -= strength;
+//                                console.log(ownerhealth);
 //                            }
 //
-//                            if (targetNode.health <= 0) {
-//                                targetNode.health = 0;
+//
+//
+//                            if (ownerhealth <= 0) {
+//                                ownerhealth = 0;
 //                                targetNode.owner = attackNode.owner;
+//
 //                            }
 //
 //
@@ -210,8 +285,8 @@
         /* COMMON FUNCTIONS */
 
         //        function capturing(attacker,target){
-        //            var health = target.r;
-        //            var strength = (attacker.r/10)
+        //            var health = target.size;
+        //            var strength = (attacker.size/10)
         //
         //            while(health > 0) {
         //                view.onFrame = function (event) {
@@ -254,39 +329,39 @@
             return node.owned;
         }
 
-        function cancelling(attackingNode,targetNode){
-            for(i=0;i<attackdata.length;i++){
-                var redattack = 0;
-                var blueattack = 0;
-                if((attackdata[i])[1] == targetNode){
-
-                    if((attackdata[i])[0] == "red"){
-                        redattack += (((attackdata[i])[1]).r/4);
-
-                    }
-
-                    if((attackdata[i])[0] == "blue"){
-                        blueattack += (((attackdata[i])[1]).r/4);
-
-                    }
-
-                    var offensive = (redattack)-(blueattack);
-
-                    if(offensive > 0){
-                     return offensive;
-
-                    }else if(offensive < 0){
-                      return offensive;
-                    }
-
-
-
-
-
-
-                }
-            }
-        }
+//        function cancelling(attackingNode,targetNode){
+//            for(i=0;i<attackdata.length;i++){
+//                var redattack = 0;
+//                var blueattack = 0;
+//                if((attackdata[i])[1] == targetNode){
+//
+//                    if((attackdata[i])[0] == "red"){
+//                        redattack += (((attackdata[i])[1]).size/4);
+//
+//                    }
+//
+//                    if((attackdata[i])[0] == "blue"){
+//                        blueattack += (((attackdata[i])[1]).size/4);
+//
+//                    }
+//
+//                    var offensive = (redattack)-(blueattack);
+//
+//                    if(offensive > 0){
+//                     return offensive;
+//
+//                    }else if(offensive < 0){ ==
+//                      return offensive;
+//                    }
+//
+//
+//
+//
+//
+//
+//                }
+//            }
+//        }
 
         // Return an array of all Nodes
         function getNodes() {
@@ -299,7 +374,7 @@
         function getSelectedNodes() {
             return getNodes().filter(function (item) {
                 return item.selected;
-                return item.r;
+                return item.size;
             });
         }
 

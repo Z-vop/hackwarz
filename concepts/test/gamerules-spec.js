@@ -2,11 +2,15 @@
  * Created by oliver on 5/3/17.
  */
 
+import {Map, List, fromJS} from 'immutable';
 var chai = require('chai');
+var chaiImmutable = require('chai-immutable');
+chai.use(chaiImmutable);
 var expect = require('chai').expect;
 var should = require('chai').should();
 
-import {attackInProgress, nodesUnderAttack, nodeIsUnderAttack, reduceAttacksToValues, beginAttack, applyAttackCycle,
+import {getAttacks, newAttack,
+    attackInProgress, nodesUnderAttack, resetAttacks, nodeIsUnderAttack, reduceAttacksToValues, beginAttack, applyAttackCycle,
     nodeIsConquered, setNodeOwnerToWinner, removeAttacks} from '../gamerules'
 
 /* SCAFFOLDING */
@@ -76,6 +80,33 @@ var attacks3 = [
 
 
 /* TESTS */
+
+describe("Actions", function() {
+
+    it("should add a new attack", function() {
+        resetAttacks();
+        newAttack(blue_node, green_node);
+        newAttack(red_node, green_node);
+        getAttacks().should.deep.equal(
+            fromJS([
+                {attackNode: blue_node, targetNode: green_node},
+                {attackNode: red_node, targetNode: green_node}
+            ])
+        )
+    })
+
+    it("should add a new attack (with numbers)", function() {
+        resetAttacks();
+        newAttack(1, 2);
+        newAttack(3, 2);
+        getAttacks().should.deep.equal(
+            fromJS([
+                {attackNode: 1, targetNode: 2},
+                {attackNode: 3, targetNode: 2}
+            ])
+        )
+    })
+})
 
 describe('Test attackInProgress', function () {
     it("should return true if attack and target nodes are in the attack list", function () {
@@ -179,6 +210,25 @@ describe('Test nodeIsConquered', function () {
     })
 })
 
+describe ('Test removeAttacks', function() {
+    // var attacks5 = [
+    //     {attackNode: blue_node, targetNode: green_node},
+    //     {attackNode: red_node, targetNode: green_node},
+    //     {attackNode: blue_node2, targetNode: red_node}
+    // ];
+    // it("should remove all attacks for a given node", function() {
+    //     expect(removeAttacks(attacks5, red_node).to.deep.equal(attacks1));
+    // })
+    // var attacks6 = [
+    //     {attackNode: blue_node, targetNode: green_node},
+    //     {attackNode: red_node, targetNode: green_node},
+    //     {attackNode: blue_node2, targetNode: red_node}
+    // ];
+    // it("should not remove attacks if node not in the list", function() {
+    //     expect(removeAttacks(attacks6, blue_node).to.deep.equal(attacks3));
+    // })
+})
+
 describe('Test Everything', function () {
     var attacks4 = [
         {attackNode: blue_node, targetNode: green_node},
@@ -186,24 +236,24 @@ describe('Test Everything', function () {
         {attackNode: blue_node2, targetNode: red_node}
     ];
 
-    // This happens when a user attacks a node
-    var node1 = beginAttack(green_node)
+    // // This happens when a user attacks a node
+    // var node1 = beginAttack(green_node);
+    //
+    // // This happens for every OnFrame cycle
+    // nodesUnderAttack(attacks4).forEach((attackedNode) => {
+    //     while (nodeIsUnderAttack(attacks4, attackedNode)) {
+    //         if (nodeIsConquered(attackedNode)) {
+    //             setNodeOwnerToWinner(attackedNode)
+    //             attacks4 = removeAttacks(attacks4, attackedNode)
+    //         } else {
+    //             node1 = applyAttackCycle(reduceAttacksToValues(attacks4), attackedNode);
+    //         }
+    //     }
+    // });
 
-    // This happens for every OnFrame cycle
-    nodesUnderAttack(attacks4).forEach((attackedNode) => {
-        while (nodeIsUnderAttack(attacks4, attackedNode)) {
-            if (nodeIsConquered(attackedNode)) {
-                setNodeOwnerToWinner(attackedNode)
-                attacks4 = removeAttacks(attackedNode)
-            } else {
-                node1 = applyAttackCycle(reduceAttacksToValues(attacks4), attackedNode);
-            }
-        }
-    });
-
-    it("should set owner 2 as the new owner", function () {
-        expect(node1.owner).to.equal(2); //red
-    })
+    // it("should set owner 2 as the new owner", function () {
+    //     expect(node1.owner).to.equal(2); //red
+    // })
 })
 
 

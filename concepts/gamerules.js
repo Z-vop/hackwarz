@@ -1,7 +1,59 @@
-/**
- * Created by oliver on 5/3/17.
- */
+import {fromJS, List, Map} from 'immutable';
+import {createStore} from 'redux';
 
+// What the state looks like:
+//
+// state = {
+//     attackList: [
+//         {attackNode: 1, targetNode: 2},
+//         {attackNode: 3, targetNode: 2}
+//     ],
+//     attackValues: [
+//         {attacker: 1, attackPower: 3}, // blue
+//         {attacker: 2, attackPower: 4}  // red
+//     ]
+// }
+
+const INITIAL_STATE = fromJS({
+    attackList: [],
+    attackValues: []
+});
+
+function reducer(state = INITIAL_STATE, action) {
+
+    switch (action.type) {
+        case 'NEW_ATTACK':
+            return state.update('attackList',
+                list => list.push(action.attack)
+            );
+        case 'RESET_ATTACKS':
+            return state.set('attackList', new List());
+    }
+    return state;
+}
+
+const store = createStore(reducer);
+
+/* ACTION CREATORS */
+
+// Get array of attacks
+function getAttacks() {
+    return store.getState().get('attackList');
+}
+
+function resetAttacks() {
+    store.dispatch({type: 'RESET_ATTACKS'});
+}
+
+// Create a new attack
+function newAttack(attacker, target) {
+    let newAttack = fromJS({attackNode: attacker, targetNode: target});
+    if(!store.getState().get('attackList').includes(newAttack)) {
+        store.dispatch({type: 'NEW_ATTACK', attack: newAttack});
+    }
+}
+
+/* OLD STYLE FUNCTIONS */
 
 // Returns true if the attack and target Nodes are already in the attackList
 function attackInProgress(attackList, attacker, target) {
@@ -53,16 +105,23 @@ function applyAttackCycle(attackValues, node) {
 }
 
 function nodeIsConquered(node) {
-    return true;
+    return node.owner1health <= 0 || node.owner2health <= 0;
 }
 
 function setNodeOwnerToWinner(node) {
     return 2; // red
 }
 
-function removeAttacks(node) {
-    return [];
+function removeAttacks(attacks, node) {
+    return attacks.filter(
+        function (a) {
+            return a.targetNode.id != node.id;
+        }
+    )
 }
 
-export {attackInProgress, nodeIsUnderAttack, nodesUnderAttack, reduceAttacksToValues, beginAttack, applyAttackCycle,
-    nodeIsConquered, setNodeOwnerToWinner, removeAttacks};
+export {
+    getAttacks, newAttack, resetAttacks, attackInProgress, nodeIsUnderAttack, nodesUnderAttack, reduceAttacksToValues,
+    beginAttack, applyAttackCycle,
+    nodeIsConquered, setNodeOwnerToWinner, removeAttacks
+};

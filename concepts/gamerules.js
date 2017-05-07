@@ -1,4 +1,4 @@
-import {fromJS, List, Map} from 'immutable';
+import {toJS, fromJS, List, Map} from 'immutable';
 import {createStore} from 'redux';
 
 // What the state looks like:
@@ -28,6 +28,12 @@ function reducer(state = INITIAL_STATE, action) {
             );
         case 'RESET_ATTACKS':
             return state.set('attackList', new List());
+        case 'REMOVE_ATTACKS':
+            // get the attackList
+            // remove were targetNode = action.node
+            return state.update('attackList', attacks => attacks
+                .filter( (m) => m.getIn(['targetNode','id']) != action.node.id )
+            );
     }
     return state;
 }
@@ -51,6 +57,10 @@ function newAttack(attacker, target) {
     if(!store.getState().get('attackList').includes(newAttack)) {
         store.dispatch({type: 'NEW_ATTACK', attack: newAttack});
     }
+}
+
+function removeAttacks(node) {
+    store.dispatch({type: 'REMOVE_ATTACKS', node: node});
 }
 
 /* OLD STYLE FUNCTIONS */
@@ -112,16 +122,11 @@ function setNodeOwnerToWinner(node) {
     return 2; // red
 }
 
-function removeAttacks(attacks, node) {
-    return attacks.filter(
-        function (a) {
-            return a.targetNode.id != node.id;
-        }
-    )
-}
+
 
 export {
-    getAttacks, newAttack, resetAttacks, attackInProgress, nodeIsUnderAttack, nodesUnderAttack, reduceAttacksToValues,
+    getAttacks, newAttack, resetAttacks,
+    attackInProgress, nodeIsUnderAttack, nodesUnderAttack, reduceAttacksToValues,
     beginAttack, applyAttackCycle,
     nodeIsConquered, setNodeOwnerToWinner, removeAttacks
 };

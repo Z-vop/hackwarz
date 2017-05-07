@@ -9,9 +9,11 @@ chai.use(chaiImmutable);
 var expect = require('chai').expect;
 var should = require('chai').should();
 
-import {getAttacks, newAttack,
-    attackInProgress, nodesUnderAttack, resetAttacks, nodeIsUnderAttack, reduceAttacksToValues, beginAttack, applyAttackCycle,
-    nodeIsConquered, setNodeOwnerToWinner, removeAttacks} from '../gamerules'
+import {
+    getAttacks, newAttack, resetAttacks,
+    attackInProgress, nodesUnderAttack, nodeIsUnderAttack, reduceAttacksToValues, beginAttack, applyAttackCycle,
+    nodeIsConquered, setNodeOwnerToWinner, removeAttacks
+} from '../gamerules'
 
 /* SCAFFOLDING */
 
@@ -81,9 +83,9 @@ var attacks3 = [
 
 /* TESTS */
 
-describe("Actions", function() {
+describe("newAttack action", function () {
 
-    it("should add a new attack", function() {
+    it("should add a new attack", function () {
         resetAttacks();
         newAttack(blue_node, green_node);
         newAttack(red_node, green_node);
@@ -95,7 +97,7 @@ describe("Actions", function() {
         )
     })
 
-    it("should add a new attack (with numbers)", function() {
+    it("should work with just numbers", function () {
         resetAttacks();
         newAttack(1, 2);
         newAttack(3, 2);
@@ -107,6 +109,40 @@ describe("Actions", function() {
         )
     })
 })
+
+describe('resetAttacks', function () {
+    it("should empty the attacks list", function () {
+        resetAttacks()
+        expect(getAttacks()).to.be.empty;
+    })
+})
+
+describe('Test removeAttacks', function () {
+    it("should remove all attacks for a given node", function () {
+        resetAttacks()
+        newAttack(blue_node, green_node);
+        newAttack(red_node, blue_node);
+        removeAttacks(blue_node);
+        expect(getAttacks()).to.deep.equal(
+            fromJS([
+                {attackNode: blue_node, targetNode: green_node}
+            ])
+        );
+
+    });
+    // it("should not remove attacks if node not in the list", function () {
+    //     resetAttacks()
+    //     newAttack(blue_node, green_node);
+    //     newAttack(red_node, green_node);
+    //     removeAttacks(blue_node);
+    //     expect(getAttacks().to.deep.equal(attacks3));
+    // })
+})
+
+
+/*
+ * OLD STUFF
+ */
 
 describe('Test attackInProgress', function () {
     it("should return true if attack and target nodes are in the attack list", function () {
@@ -130,11 +166,11 @@ describe('Test nodesUnderAttack', function () {
     })
 });
 
-describe('Test nodeIsUnderAttack', function() {
-    it("should return true if node is in attack list", function() {
+describe('Test nodeIsUnderAttack', function () {
+    it("should return true if node is in attack list", function () {
         expect(nodeIsUnderAttack(attacks3, red_node)).to.equal(true);
     })
-    it("should return false if node is no in attack list", function() {
+    it("should return false if node is no in attack list", function () {
         expect(nodeIsUnderAttack(attacks3, blue_node)).to.equal(false);
     })
 })
@@ -210,24 +246,6 @@ describe('Test nodeIsConquered', function () {
     })
 })
 
-describe ('Test removeAttacks', function() {
-    // var attacks5 = [
-    //     {attackNode: blue_node, targetNode: green_node},
-    //     {attackNode: red_node, targetNode: green_node},
-    //     {attackNode: blue_node2, targetNode: red_node}
-    // ];
-    // it("should remove all attacks for a given node", function() {
-    //     expect(removeAttacks(attacks5, red_node).to.deep.equal(attacks1));
-    // })
-    // var attacks6 = [
-    //     {attackNode: blue_node, targetNode: green_node},
-    //     {attackNode: red_node, targetNode: green_node},
-    //     {attackNode: blue_node2, targetNode: red_node}
-    // ];
-    // it("should not remove attacks if node not in the list", function() {
-    //     expect(removeAttacks(attacks6, blue_node).to.deep.equal(attacks3));
-    // })
-})
 
 describe('Test Everything', function () {
     var attacks4 = [

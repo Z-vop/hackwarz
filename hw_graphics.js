@@ -1,4 +1,4 @@
-// ## Hacknode Drawing Functions ## //
+// ## Hacknode Drawing Functions    ## //
 paper.install(window);
 
 function Node(x, y, r, c) {
@@ -8,6 +8,16 @@ function Node(x, y, r, c) {
     var _health = 0;
     var _owner = 0; // integer, 0 = no owner
     var w = 15; // border width
+    var _selectable = true;
+
+    // For blinking behavior
+    var blinking = false;
+    var brighter = false;
+    var glowing = false;
+    var blinkingColor = this.baseColor;
+    var originalColor = new Color(c);
+    var glowingColor = this.baseColor;
+
 
     var outerNode = new Path.Circle({
         center: new Point(x, y),
@@ -25,6 +35,23 @@ function Node(x, y, r, c) {
     });
 
     var arcNode = createArc(x, y, r + w, c);
+
+    // Make the shield icon
+    var shieldPathData = "M42.821,6.161L23.453,0.113c-0.486-0.151-1.006-0.151-1.492,0L2.593,6.161c-1.045,0.326-1.758,1.294-1.758,2.39"
+        + " c0,26.781,13.531,33.182,20.801,36.621c0.339,0.16,0.705,0.24,1.071,0.24s0.731-0.08,1.069-0.24"
+        + " c7.271-3.438,20.802-9.84,20.802-36.621C44.579,7.456,43.866,6.488,42.821,6.161z M22.707,40.137";
+    var shield = new Path({
+        pathData: shieldPathData,
+        fillColor: new Color(1.0, .8),
+        scale: 2.1,
+        position: new Point(x, y+2),
+        //strokeWidth: 3,
+        //strokeColor: new Color(1.0, .35),
+        //shadowColor: 'white',
+        //shadowBlur: 20,
+        shadowOffset: new Point(0, 0)
+    });
+    shield.visible = false;
 
     // Make the damage indicator (text)
     var damageText = new PointText({
@@ -72,7 +99,8 @@ function Node(x, y, r, c) {
     });
     targetCircle.visible = false;
 
-    Group.call(this, [outerNode, innerNode, arcNode, damageText, selectNode, targetCircle, mouseTarget]);
+
+    Group.call(this, [outerNode, innerNode, arcNode, shield, damageText, selectNode, targetCircle, mouseTarget]);
 
 
     // ACCESSORS
@@ -82,7 +110,7 @@ function Node(x, y, r, c) {
         },
         set: function (owner) {
             _owner = owner;
-            switch(_owner) {
+            switch (_owner) {
                 case 1:
                     // Owner 1: set the node color to blue
                     setBaseColor('#4286f4')
@@ -103,12 +131,16 @@ function Node(x, y, r, c) {
             return _owner !== 0;
         }
     });
+    Object.defineProperty(this, "isSelectable", {
+        get: () => _selectable,
+        set: (b) => _selectable = b
+    });
     Object.defineProperty(this, "selected", {
         get: function () {
             return selectNode.visible;
         },
         set: function (_selected) {
-            selectNode.visible = _selected;
+            selectNode.visible = _selectable ? _selected : false;
         }
     });
     Object.defineProperty(this, "targeted", {
@@ -119,24 +151,67 @@ function Node(x, y, r, c) {
             targetCircle.visible = _targeted;
         }
     });
+    Object.defineProperty(this, "shielded", {
+        get: function () {
+            return shield.visible;
+        },
+        set: function (_shielded) {
+            shield.visible = _shielded;
+            damageText.fillColor = _shielded ? 'black' : 'white';
+        }
+    });
     Object.defineProperty(this, "health", {
         get: function () {
             return _health;
         },
         set: function (amount) {
             _health = amount;
-            if(_health <= 0) damageText.content = ""
+            if (_health <= 0) damageText.content = ""
             else damageText.content = _health.toString();
         }
     });
     Object.defineProperty(this, "baseColor", {
-        get: function() {
+        get: function () {
             return outerNode.fillColor;
         },
         set: function (_color) {
             setBaseColor(_color);
         }
     });
+
+    Object.defineProperty(this, "blinking", {
+        get: function () {
+            return blinking;
+        },
+        set: function (_blinking) {
+            blinking = _blinking;
+            if (blinking) {
+                originalColor = this.baseColor;
+                blinkingColor = this.baseColor;
+            } else {
+                setBaseColor(originalColor)
+            }
+        }
+    });
+
+
+    Object.defineProperty(this, "glowing", {
+        get: function () {
+            return glowing;
+        },
+        set: function (_glowing) {
+            glowing = _glowing;
+            if (glowing) {
+                glowingColor = new Color(this.baseColor);
+                glowingColor.brightness = 1.0;
+                setBaseColor(glowingColor);
+            } else {
+                setBaseColor(originalColor);
+            }
+        }
+    });
+
+
 
     // PRIVATE FUNCTIONS
 
@@ -172,17 +247,30 @@ function Node(x, y, r, c) {
         arcNode.name = 'arcNode';
         return arcNode;
     };
+
+    // Handles any Node animation
+    this.onFrame = function (event) {
+        if (this.blinking) {
+            if (blinkingColor.brightness <= 0.45) {
+                brighter = true;
+            } else if (blinkingColor.brightness >= 0.80) {
+                brighter = false;
+            }
+
+            if (brighter == false) {
+                blinkingColor.brightness -= 0.01;
+            } else if (brighter == true) {
+                blinkingColor.brightness += 0.01;
+            }
+            setBaseColor(blinkingColor);
+        }
+    };
 }
 
 Node.prototype = Object.create(Group.prototype);
 Node.prototype.constructor = Group;
 
-Node.prototype.isSelectable = function () {
-    return this.owned;
-}
-
 // ### Standalone functions
-
 
 function connectNodes(node1, node2) {
     // TODO: Need to make lines an object type
@@ -191,8 +279,8 @@ function connectNodes(node1, node2) {
     line.sendToBack();
     line.add(node1.position);
     line.add(node2.position);
-    line.strokeWidth = 10;
-    line.strokeColor = '#156011';
+    line.strokeWidth = 3;
+    line.strokeColor = '#17ff02';
     line.isAnAttack = false;
     line.node1 = node1;
     line.node2 = node2;

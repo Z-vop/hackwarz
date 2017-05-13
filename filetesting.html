@@ -25,8 +25,14 @@
     <script>
         // Only execute our code once the DOM is ready.
 
-        // TODO: Replace array with Redux state
+        // TODO: Replace variables with Redux state
         var addedObjects = [];
+        var loggedInUser = 1;
+
+        function switchUser() {
+            loggedInUser = (loggedInUser == 1 ? 2 : 1);
+            document.getElementById("userNumber").innerHTML = loggedInUser;
+        }
 
 
 
@@ -35,6 +41,8 @@
             var canvas = document.getElementById('myCanvas');
             paper.setup(canvas);
             view.draw();
+
+
 
             // x, y, radius, owner
             var networkData = [
@@ -80,6 +88,31 @@
             connectTool.onMouseDown = function () {
                 if (this.selected == false) {
                     this.selected = true;
+
+                } else this.selected = false;
+            };
+
+            shieldTool = new Node(150, 100, 20, "#eb42f4");
+            shieldTool.onMouseDown = function () {
+                if (this.selected == false) {
+                    this.selected = true;
+
+                } else this.selected = false;
+            };
+
+            attackTool = new Node(100, 400, 20, "#f4ff32");
+            attackTool.onMouseDown = function () {
+                if (this.selected == false) {
+                    this.selected = true;
+
+                } else this.selected = false;
+            };
+
+            disableTool = new Node(150, 200, 20, "#a530ff");
+            disableTool.onMouseDown = function () {
+                if (this.selected == false) {
+                    this.selected = true;
+                    console.log('hey');
                 } else this.selected = false;
             };
 
@@ -90,8 +123,9 @@
                 newnode.owner = thenode[3];
                 newnode.size = thenode[2];
                 newnode.health = newnode.size;
-                newnode.owner1health = newnode.size;
-                newnode.owner2health = newnode.size;
+                newnode.owner1health = newnode.health;
+                newnode.owner2health = newnode.health;
+                newnode.strength = newnode.size/4;
                 addedObjects.push(newnode);
             }
 
@@ -115,7 +149,7 @@
                     }
 
 
-                    if (item instanceof Node && (item !== connectTool)) {                     // Did we click on a Node?
+                    if (item instanceof Node && (item !== connectTool) && (item !== disableTool) && (item !== shieldTool) && (item !== attackTool) ) {                     // Did we click on a Node?
                         const clickedNode = item;  // just to make code clearer
                         item.selected = (!clickedNode.selected);
 
@@ -125,157 +159,154 @@
                                 deselectNodes(getSelectedNodes());
                             }
                         }
+
+
+
                         //console.log(item.size);
 
                         if (!clickedNode.owned) {   // They clicked on a green node
-                            getConnectedPaths(clickedNode).forEach(function (line) {  // for each line that is connected to the clicked-on Node
-                                // Test the node at the end of each line
-                                // Find out whether the other node is node1 or node2
-                                var connectedNode = (clickedNode.id == line.node1.id) ? line.node2 : line.node1;
-                                // If the node is owned and selected
-                                if (connectedNode.owned && connectedNode.selected) {
-                                    // Record the attack
-
-                                    if (attackInProgress(attackdata, connectedNode, clickedNode) == false) {
-
-                                        attackdata.push({attackNode: connectedNode, targetNode: clickedNode});
-                                    }
-
-                                    connectedNode.selected = false;
+                            if(disableTool.selected){
+                                console.log('hey there');
+                                if((clickedNode.owner1health == clickedNode.size || clickedNode.owner2health == clickedNode.size) ) {
+                                    clickedNode.baseColor = '#878787';
+                                    clickedNode.isSelectable = false;
+                                    disableTool.selected = false;
+                                    disableTool.isSelectable = false;
                                     clickedNode.selected = false;
-                                    //console.log(clickedNode.size);
+                                    setTimeout(function(){
+                                        disableTool.isSelectable = true;
+                                        clickedNode.baseColor = "green";
+                                        clickedNode.isSelectable = "green";
+                                    },400)
                                 }
-                            }); // END each connected line
+                            }
+
+                            if(disableTool.selected == false && shieldTool.selected == false && attackTool.selected == false ){
+                                getConnectedPaths(clickedNode).forEach(function (line) {  // for each line that is connected to the clicked-on Node
+                                    // Test the node at the end of each line
+                                    // Find out whether the other node is node1 or node2
+                                    var connectedNode = (clickedNode.id == line.node1.id) ? line.node2 : line.node1;
+                                    // If the node is owned and selected
+                                    if (connectedNode.owned && connectedNode.selected) {
+                                        // Record the attack
+
+                                        if (attackInProgress(attackdata, connectedNode, clickedNode) == false) {
+
+                                            attackdata.push({attackNode: connectedNode, targetNode: clickedNode});
+
+                                            clickedNode.health = clickedNode.size
+
+                                        }
+
+                                        connectedNode.selected = false;
+                                        clickedNode.selected = false;
+                                        //console.log(clickedNode.size);
+                                    }
+                                }); // END each connected line
+                            }
                         } // END clicked node not owned
-                    } // END clicked a Node
+
+                        if(clickedNode.owned){
+
+                            // Shield Tool
+                            if(shieldTool.selected){
+                                clickedNode.shielded = true;
+                                clickedNode.health = (clickedNode.size * 3);
+                                clickedNode.owner1health = (clickedNode.size * 3);
+                                clickedNode.owner2health = (clickedNode.size * 3);
+                                clickedNode.selected = false;
+                                shieldTool.selected = false;
+                                setTimeout(function () {
+                                    clickedNode.owner1health = (clickedNode.health);
+                                    clickedNode.owner2health = (clickedNode.size);
+                                    clickedNode.health = clickedNode.size;
+                                    clickedNode.shielded = false;
+                                }, 2000);
+                            }
+
+                            // Attack Tool
+                            if(attackTool.selected){
+                                clickedNode.selected = false;
+                                attackTool.selected = false;
+                                clickedNode.strength = (2*clickedNode.strength);
+                                console.log(clickedNode.strength);
+                                setTimeout(function () {
+                                    clickedNode.strength = (clickedNode.size/4)
+                                }, 100000);
+                            }
+                       }
+
+
+                    } // EwND clicked a Node
                 } // END hit result
             }; // END mouseDown
 
             view.onFrame = function (event) {
                 // event.count is the number of times the frame event has been fired
-                if (event.count % 100 == 0) { // 60 frames per second
+
+
+                if (event.count % 25 == 0) { // 60 frames per second
 
                     for (i = 0; i < attackdata.length; i++) {
                         var z = attackdata[i];
                         var attackNode = z.attackNode;
                         var targetNode = z.targetNode;
+                        var NodeHealth = targetNode.size;
+                        var tempColor = targetNode.baseColor;
+                        var brighter = false;
 
 
-                        function reduceAttacksToValues(Anode,Tnode){
-                            var NumberOfAttacks = array.length;
-                            var owner1attack = 0;
-                            var owner2attack = 1;
+                        //seeing which owner it belongs to to determine which health to attack
+                        if (targetNode.health > 0) {
 
-                            if((z[0]== Anode) && (z[1] == Tnode)) {
-                                for (var n = 0; n < array.length; n++) {
-
-                                    if ((array[n])[0].owner == 0) {
-                                        owner1attack += (array[n][0].size / 10);
-
-                                    }
-
-                                    if ((array[n])[0].owner = 1) {
-                                        owner2attack += (array[n][0].size / 10);
-                                    }
-
-                                }
-                                return owner2attack;
-                                return owner2attack;
-                            }
-                        }
-
-
-
-
-
-
-                            var strength = attackNode.size / 5;
-
-
-
-                            //seeing which owner it belongs to to determine which health to attack
 
                             if (attackNode.owner == 1) {
-                                console.log('blue');
                                 if (targetNode.owner1health > 0) {
-                                    targetNode.owner1health -= strength;
+                                    targetNode.blinking = true;
+                                    if (targetNode.selected) {
+                                        console.log("selected");
+                                    }
+                                    targetNode.owner1health -= attackNode.strength;
                                     console.log(targetNode.owner1health);
+                                    targetNode.selected = false;
                                 }
 
 
                                 if (targetNode.owner1health <= 0) {
                                     targetNode.targeted = false;
-                                    targetNode.owner1health = targetNode.size;
-                                    targetNode.owner2health = targetNode.size
+                                    targetNode.blinking = false;
                                     targetNode.owner = attackNode.owner;
-
-
+                                    targetNode.owner1health = 0;
+                                    targetNode.health = 0;
 
                                 }
-
                             }
 
 
                             if (attackNode.owner == 2) {
-                                console.log('red');
-                                if (targetNode.owner2health > 0) {
-                                    targetNode.owner2health -= strength;
-                                    console.log(targetNode.owner2health);
-                                }
 
+                                if (targetNode.owner2health > 0) {
+                                    targetNode.blinking = true;
+                                    targetNode.owner2health -= attackNode.strength;;
+                                    console.log(targetNode.owner2health);
+                                    targetNode.selected = false;
+                                }
 
                                 if (targetNode.owner2health <= 0) {
                                     targetNode.targeted = false;
-
-                                    targetNode.owner2health = targetNode.size;
-                                    targetNode.owner1health = targetNode.size
+                                    targetNode.blinking = false;
                                     targetNode.owner = attackNode.owner;
-
-
+                                    targetNode.owner2health = 0;
+                                    targetNode.health = 0;
 
                                 }
                             }
-
-
-//
-////
-//                        if (targetNode.owner !== attackNode.owner) {
-//
-//                            if (ownerhealth > 0) {
-//                                ownerhealth -= strength;
-//                                console.log(ownerhealth);
-//                            }
-//
-//
-//
-//                            if (ownerhealth <= 0) {
-//                                ownerhealth = 0;
-//                                targetNode.owner = attackNode.owner;
-//
-//                            }
-//
-//
-//                        }
+                            //targetNode.health = Math.round((targetNode.owner1health + targetNode.owner2health)/2);
+                        }
                     }
+
                 } // end once_per_second
 
-//                if (event.count % 1 == 0 && health > 0) {
-//                    //console.log(health, tempColor.toString(), tempColor.toCSS(), tempColor.brightness, brighter);
-//
-//                    if (tempColor.brightness <= 0.45) {
-//                        brighter = true;
-//                    } else if (tempColor.brightness >= 0.80) {
-//                        brighter = false;
-//                    }
-//
-//                    if (brighter == false) {
-//                        tempColor.brightness -= 0.01;
-//                    } else if (brighter == true) {
-//                        tempColor.brightness += 0.01;
-//                    }
-//                    item.baseColor = tempColor;
-//
-//                } // end 5_times_per_second
             };//end onFrame
 
         }; //END OnLoad
@@ -283,25 +314,6 @@
 
 
         /* COMMON FUNCTIONS */
-
-        //        function capturing(attacker,target){
-        //            var health = target.size;
-        //            var strength = (attacker.size/10)
-        //
-        //            while(health > 0) {
-        //                view.onFrame = function (event) {
-        //                    if ((event % 10) == 0) {
-        //                        health -= strength;
-        //
-        //                        if (health == 0) {
-        //
-        //                            target.owner = attacker.owner;
-        //
-        //                        }
-        //                    }
-        //                };
-        //            }
-        //        }
 
         // Returns true if the attack and target Nodes are already in the attackList
         function attackInProgress(attackList, attacker, target) {
@@ -328,40 +340,6 @@
             if (!(node instanceof Node)) return false;
             return node.owned;
         }
-
-//        function cancelling(attackingNode,targetNode){
-//            for(i=0;i<attackdata.length;i++){
-//                var redattack = 0;
-//                var blueattack = 0;
-//                if((attackdata[i])[1] == targetNode){
-//
-//                    if((attackdata[i])[0] == "red"){
-//                        redattack += (((attackdata[i])[1]).size/4);
-//
-//                    }
-//
-//                    if((attackdata[i])[0] == "blue"){
-//                        blueattack += (((attackdata[i])[1]).size/4);
-//
-//                    }
-//
-//                    var offensive = (redattack)-(blueattack);
-//
-//                    if(offensive > 0){
-//                     return offensive;
-//
-//                    }else if(offensive < 0){ ==
-//                      return offensive;
-//                    }
-//
-//
-//
-//
-//
-//
-//                }
-//            }
-//        }
 
         // Return an array of all Nodes
         function getNodes() {
@@ -436,9 +414,12 @@
     </script>
 
 
+
 </head>
 <body>
 <canvas id="myCanvas" resize></canvas>
+<button id="bSwitchUser" style="position: absolute; top:10px; left:10px;" onclick="switchUser()">Switch User</button>
+<h1 id="userNumber" style="color:white;position: absolute; top:20px; left:10px;">1</h1>
 </body>
 </html>
 

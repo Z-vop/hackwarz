@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        html,
+        body {
+            margin: 0;
+            overflow: hidden;
+            height: 100%;
+            background: black;
+        }
+
+        canvas[resize] {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+    <meta charset="UTF-8">
+    <title>Hackwarz Network Editor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.10.3/paper-full.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js"></script>
+    <script src="hw_graphics.js"></script>
+
+    <script type="text/javascript">
+        paper.install(window);
+
+        var network = {
+            description: "Generic Network",
+            nodes: new Array(),            // Array of Nodes
+            connections: new Array(),      // Array of Connections (node IDs)
+        }
+
+        function JSON_replacer(key, value) {
+            // Filtering out properties
+            if (['description', 'x', 'y'].includes(key)) {
+                return value;
+            }
+            return undefined;
+        }
+
+        // Only execute our code once the DOM is ready.
+        window.onload = function () {
+
+            var canvas = $('#myCanvas').get(0);
+            paper.setup(canvas);
+
+            //var addedObjects = [];
+            var createToolsize = 30;
+
+            var createTool, plusFiveTool, minusFiveTool, connectTool, blueTool, deleteTool, redTool, leveldata;
+
+            // Divider Line
+            var path = new Path.Line(new Point(200, 0), new Point(200, 1300));
+            path.strokeColor = "green";
+            path.strokeWidth = 8;
+
+            // Create tool
+            function drawCreateTool(size) {
+                if (typeof createTool != 'undefined') createTool.remove(); // We will redraw the tool
+                createTool = new Node(80, 100, size, 'green');
+                createTool.onMouseDown = function () {
+                    if (this.selected == false) {
+                        deselectTools();
+                        this.selected = true;
+                    } else {
+                        this.selected = false;
+                    }
+                };
+            }
+
+            // Size plus five tool
+            plusFiveTool = new Node(120, 200, 10, '#7f7f7f');
+            plusFiveTool.health = "+";
+            plusFiveTool.onMouseDown = function () {
+                createToolsize += 5;
+                if (createToolsize > 100) createToolsize = 100;
+                drawCreateTool(createToolsize);
+            };
+
+            minusFiveTool = new Node(50, 200, 10, '#7f7f7f');
+            minusFiveTool.health = "-";
+            minusFiveTool.onMouseDown = function () {
+                createToolsize -= 5;
+                if (createToolsize < 5) createToolsize = 5;
+                drawCreateTool(createToolsize);
+            };
+
+            deleteTool = new Node(100, 300, 30, '#ff3535');
+            deleteTool.onMouseDown = function () {
+                if (this.selected == false) {
+                    deselectTools();
+                    this.selected = true;
+                } else this.selected = false;
+
+            };
+
+            blueTool = new Node(150, 280, 10, "#4286f4");
+            blueTool.onMouseDown = function () {
+                createTool.baseColor = '#4286f4';
+                Ncolor = '#4286f4';
+                if (this.selected == false) {
+                    deselectTools();
+                    this.selected = true;
+                } else this.selected = false;
+            };
+
+            redTool = new Node(110, 360, 10, "#df5767");
+            redTool.onMouseDown = function () {
+                createTool.baseColor = '#df5767';
+                Ncolor = '#df5767';
+                if (this.selected == false) {
+                    deselectTools();
+                    this.selected = true;
+                } else this.selected = false;
+            };
+
+            connectTool = new Node(150, 330, 10, "#f49542");
+            connectTool.onMouseDown = function () {
+                if (this.selected == false) {
+                    deselectTools();
+                    this.selected = true;
+                } else this.selected = false;
+            };
+
+            leveldata = new Node(60, 360, 10, "#b983ea");
+            leveldata.onMouseDown = function () {
+                //console.log(network);
+                // console.log(JSON.stringify( { x: { value: 'x', enumerable: false }, y: { value: 'y', enumerable: true } } ));
+                // JSON.stringify(network, JSON_replacer)
+                for (i = 0; i < addedObjects.length; i++) {
+
+                    if (addedObjects[i].name == 'line') {
+                        console.log("connectNodes(" + (addedObjects[i].node1.id) + "," + (addedObjects[i].node2.id) + ");");
+                    }
+
+                    if (addedObjects[i] instanceof Node) {
+                        console.log("new Node(" + (addedObjects[i].x) + ", " + (addedObjects[i].y) + ', '
+                            + (addedObjects[i].r) + ", '" + (addedObjects[i].baseColor.toCSS(true)) + "');");
+                    }
+                }
+            };
+
+
+
+            var hitOptions = {
+                //class: Path,
+                //segments: false,
+                stroke: true,
+                fill: true,
+                tolerance: 5
+            };
+
+
+            paper.view.onMouseDown = function (event) {
+                console.log(event);
+                if (event.point.x < 205) return;                         // ensure click is in network map area
+
+                var hitResult = paper.project.hitTest(event.point, hitOptions);
+
+                if (hitResult) {                                    // Are we clicking on an existing object?
+                    var item;
+                    if (hitResult.item.parent instanceof Node) {    // Find either the Node or the Path object
+                        item = hitResult.item.parent;
+                    } else {
+                        item = hitResult.item;
+                    }
+
+                    if (deleteTool.selected) {                      // Is the deleteTool selected?
+                        removeObject(item);                         // remove the object from the view and the list
+                        return;
+                    }
+
+
+                    if (item instanceof Node) {                     // Did we click on a Node?
+                        item.selected = (!item.selected);
+
+                        if (connectTool.selected) {
+                            if (countSelectedNodes() > 1) {
+                                connectAllNodes(getSelectedNodes());
+                                deselectNodes(getSelectedNodes());
+                            }
+                        }
+                    }
+                } else {
+                    // We did not click on an existing object, process the click
+                    if (createTool.selected || blueTool.selected || redTool.selected) {
+
+                        if (blueTool.selected) Ncolor = createTool.baseColor;
+                        if (redTool.selected) Ncolor = createTool.baseColor;
+                        if (createTool.selected) Ncolor = createTool.baseColor;
+                        // Create a node
+                        var newnode = new Node(event.point.x, event.point.y, createToolsize, Ncolor);
+                        console.log(event.point.x, event.point.y, createToolsize, Ncolor);
+                        network.nodes.push((newnode));
+                    }
+                }
+            };
+
+            // Return a count of selected nodes
+            function countSelectedNodes() {
+                return getSelectedNodes().length;
+            }
+
+            // Return an array of all the selected nodes
+            function getSelectedNodes() {
+                var selectedNodes = [];
+                for (var i = 0; i < network.nodes.length; i++) {
+                    if (network.nodes[i].selected) selectedNodes.push(network.nodes[i]);
+                }
+                return selectedNodes;
+            }
+
+            // Connect an array of Node objects
+            function connectAllNodes(nodesArray) {
+                for (var i = 0; i < nodesArray.length - 1; i++) {
+                    network.connections.push(connectNodes(nodesArray[i], nodesArray[i + 1]));
+                }
+            }
+
+            // Deselect an array of Node objects
+            function deselectNodes(nodes) {
+                for (var i = 0; i < nodes.length; i++) nodes[i].selected = false;
+            }
+
+            // Remove a Node from network.connections
+            function removeObject(node) {
+                // If the item is a Node and it is connected, remove each connected line
+                if (node instanceof Node) {
+                    getConnectedPaths(node).forEach(removeConnection);
+                    node.remove();
+                    index = network.nodes.findIndex(function (testItem) {
+                        return testItem.id == node.id;
+                    });
+                    if (index != -1) network.nodes.splice(index, 1);
+                }
+            }
+
+            function removeConnection(conn) {
+                conn.remove();
+                index = network.connections.findIndex(function (testItem) {
+                    return testItem.id == conn.id;
+                });
+                if (index != -1) network.connections.splice(index, 1);
+            }
+
+            // Return true if given line is connected to the given node
+            function LineIsConnectedToNode(line, node) {
+                if (!(line instanceof Path)) return false;
+                if (!(node instanceof Node)) return false;
+                return (line.node1.id == node.id || line.node2.id == node.id);
+            }
+
+            // Return an array of all of the Path items (PaperJS Line objects currently)
+            function getPaths() {
+                return network.connections;
+            }
+
+            // Return an array of all paths connected to given node
+            function getConnectedPaths(node) {
+                if (!(node instanceof Node)) return [];
+
+                return getPaths().filter(function (path) {
+                    return LineIsConnectedToNode(path, node)
+                });
+            }
+
+            // Deselected all the tools
+            function deselectTools() {
+                createTool.selected = false;
+                plusFiveTool.selected = false;
+                minusFiveTool.selected = false;
+                connectTool.selected = false;
+                blueTool.selected = false;
+                deleteTool.selected = false;
+                redTool.selected = false;
+            }
+
+            // Draw the view now:
+            drawCreateTool(createToolsize);
+            view.draw();
+        }; //end OnLoad
+
+    </script>
+</head>
+<body>
+
+
+<div id="page">
+    <canvas id="myCanvas" resize></canvas>
+</div>
+
+
+</body>
+</html>
+
+

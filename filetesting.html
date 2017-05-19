@@ -80,7 +80,6 @@
                 [260, 559, 25, 1]];
             var attackdata = [];
 
-
             // This tool allows us to draw lines between nodes
             connectTool = new Node(150, 330, 10, "#f49542");
             connectTool.onMouseDown = function () {
@@ -106,13 +105,6 @@
                 } else this.selected = false;
             };
 
-            disableTool = new Node(150, 200, 20, "#a530ff");
-            disableTool.onMouseDown = function () {
-                if (this.selected == false) {
-                    this.selected = true;
-                    console.log('hey');
-                } else this.selected = false;
-            };
 
             // Draws the network map from the array
             for (i = 0; i < networkData.length; i++) {
@@ -123,7 +115,7 @@
                 newnode.health = newnode.size;
                 newnode.owner1health = newnode.health;
                 newnode.owner2health = newnode.health;
-                newnode.strength = newnode.size/4;
+                newnode.strength = newnode.size / 4;
                 addedObjects.push(newnode);
             }
 
@@ -147,9 +139,10 @@
                     }
 
 
-                    if (item instanceof Node && (item !== connectTool) && (item !== disableTool) && (item !== shieldTool) && (item !== attackTool) ) {                     // Did we click on a Node?
+                    if (item instanceof Node && (item !== connectTool) && (item !== shieldTool) && (item !== attackTool)) {                     // Did we click on a Node?
                         const clickedNode = item;  // just to make code clearer
                         item.selected = (!clickedNode.selected);
+                        console.log(item.id);
 
                         if (connectTool.selected) {
                             if (countSelectedNodes() > 1) {
@@ -159,43 +152,23 @@
                         }
 
 
-
                         //console.log(item.size);
 
-                        if (!clickedNode.owned) {   // They clicked on a green node
-                            if(disableTool.selected){
-                                console.log('hey there');
-                                if((clickedNode.owner1health == clickedNode.size || clickedNode.owner2health == clickedNode.size) ) {
-                                    clickedNode.baseColor = '#878787';
-                                    clickedNode.isSelectable = false;
-                                    disableTool.selected = false;
-                                    disableTool.isSelectable = false;
-                                    clickedNode.selected = false;
-                                    setTimeout(function(){
-                                        disableTool.isSelectable = true;
-                                        clickedNode.baseColor = "green";
-                                        clickedNode.isSelectable = "green";
-                                    },400)
-                                }
-                            }
+                        if ((!clickedNode.owned) || (clickedNode.owner !== loggedInUser)) {   // They clicked on a green node
 
-                            if(disableTool.selected == false && shieldTool.selected == false && attackTool.selected == false ){
+
+                            if (shieldTool.selected == false && attackTool.selected == false) {
                                 getConnectedPaths(clickedNode).forEach(function (line) {  // for each line that is connected to the clicked-on Node
                                     // Test the node at the end of each line
                                     // Find out whether the other node is node1 or node2
                                     var connectedNode = (clickedNode.id == line.node1.id) ? line.node2 : line.node1;
                                     // If the node is owned and selected
-                                    if (connectedNode.owned && connectedNode.selected) {
+                                    if (connectedNode.owner == loggedInUser && connectedNode.selected) {
                                         // Record the attack
-
                                         if (attackInProgress(attackdata, connectedNode, clickedNode) == false) {
-
                                             attackdata.push({attackNode: connectedNode, targetNode: clickedNode});
-
                                             clickedNode.health = clickedNode.size
-
                                         }
-
                                         connectedNode.selected = false;
                                         clickedNode.selected = false;
                                         //console.log(clickedNode.size);
@@ -204,10 +177,11 @@
                             }
                         } // END clicked node not owned
 
-                        if(clickedNode.owned){
+                        if (clickedNode.owner == loggedInUser) {
+                            //item.selected = (!clickedNode.selected);
 
                             // Shield Tool
-                            if(shieldTool.selected){
+                            if (shieldTool.selected) {
                                 clickedNode.shielded = true;
                                 clickedNode.health = (clickedNode.size * 3);
                                 clickedNode.owner1health = (clickedNode.size * 3);
@@ -223,16 +197,18 @@
                             }
 
                             // Attack Tool
-                            if(attackTool.selected){
+                            if (attackTool.selected) {
                                 clickedNode.selected = false;
                                 attackTool.selected = false;
-                                clickedNode.strength = (2*clickedNode.strength);
+                                clickedNode.strength = (2 * clickedNode.strength);
                                 console.log(clickedNode.strength);
                                 setTimeout(function () {
-                                    clickedNode.strength = (clickedNode.size/4)
+                                    clickedNode.strength = (clickedNode.size / 4)
                                 }, 100000);
                             }
-                       }
+
+
+                        }
 
 
                     } // EwND clicked a Node
@@ -241,8 +217,6 @@
 
             view.onFrame = function (event) {
                 // event.count is the number of times the frame event has been fired
-
-
                 if (event.count % 25 == 0) { // 60 frames per second
 
                     for (i = 0; i < attackdata.length; i++) {
@@ -250,65 +224,69 @@
                         var attackNode = z.attackNode;
                         var targetNode = z.targetNode;
                         var NodeHealth = targetNode.size;
-                        var tempColor = targetNode.baseColor;
-                        var brighter = false;
 
 
                         //seeing which owner it belongs to to determine which health to attack
                         if (targetNode.health > 0) {
 
-
                             if (attackNode.owner == 1) {
-                                if (targetNode.owner1health > 0) {
+                                if ((targetNode.owner1health > 0)) {
+                                    // TODO: Should only be done ONCE when the attack on the node starts
                                     targetNode.blinking = true;
-                                    if (targetNode.selected) {
-                                        console.log("selected");
-                                    }
                                     targetNode.owner1health -= attackNode.strength;
-                                    console.log(targetNode.owner1health);
+                                    // TODO: Should only be done ONCE when the attack on the node starts
                                     targetNode.selected = false;
                                 }
 
-
+                                // TODO: The checking to see if node is conquered should be done outside of attack loop
                                 if (targetNode.owner1health <= 0) {
                                     targetNode.targeted = false;
+                                    // TODO: Should only be done ONCE when the attack on the node starts
                                     targetNode.blinking = false;
                                     targetNode.owner = attackNode.owner;
-                                    targetNode.owner1health = 0;
-                                    targetNode.health = 0;
-
+                                    targetNode.owner1health = targetNode.size;
+                                    targetNode.owner2health = targetNode.size;
+                                    targetNode.health = targetNode.size;
+                                    // TODO: Need to remove attack from attackdata
+                                    attackdata.splice(i, 1);
                                 }
                             }
 
 
                             if (attackNode.owner == 2) {
 
-                                if (targetNode.owner2health > 0) {
+                                if ((targetNode.owner2health > 0)) {
                                     targetNode.blinking = true;
-                                    targetNode.owner2health -= attackNode.strength;;
+                                    targetNode.owner2health -= attackNode.strength;
                                     console.log(targetNode.owner2health);
                                     targetNode.selected = false;
                                 }
 
+                                // TODO: The checking to see if node is conquered should be done outside of attack loop
                                 if (targetNode.owner2health <= 0) {
                                     targetNode.targeted = false;
                                     targetNode.blinking = false;
                                     targetNode.owner = attackNode.owner;
-                                    targetNode.owner2health = 0;
-                                    targetNode.health = 0;
-
+                                    targetNode.owner2health = targetNode.size;
+                                    targetNode.owner1health = targetNode.size;
+                                    targetNode.health = targetNode.size;
+                                    // TODO: Need to remove attack from attackdata
+                                    attackdata.splice(i, 1);
                                 }
+
+
                             }
                             //targetNode.health = Math.round((targetNode.owner1health + targetNode.owner2health)/2);
                         }
-                    }
+                    } // END attack loop
 
+                    //TODO: Check to see if node is conquered here
+                    //TODO: Take all attacks for each node that is conquered out of the attack list
                 } // end once_per_second
 
             };//end onFrame
 
         }; //END OnLoad
-
 
 
         /* COMMON FUNCTIONS */
@@ -420,7 +398,3 @@
 <h1 id="userNumber" style="color:white;position: absolute; top:20px; left:10px;">1</h1>
 </body>
 </html>
-
-
-
-

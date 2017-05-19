@@ -2,19 +2,14 @@
 <html lang="en">
 <head>
     <style>
-        html,
-        body {
-            margin: 0;
-            overflow: hidden;
+        canvas[resize] {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
             height: 100%;
             background: black;
         }
-
-        canvas[resize] {
-            width: 100%;
-            height: 100%;
-        }
-
     </style>
     <meta charset="UTF-8">
     <title>Hackwarz Network Editor</title>
@@ -34,14 +29,17 @@
             document.getElementById("userNumber").innerHTML = loggedInUser;
         }
 
-
-
         window.onload = function () {
 
             var canvas = document.getElementById('myCanvas');
             paper.setup(canvas);
             view.draw();
 
+            // Resizes the PaperJS view when the canvas resizes
+            $(window).resize(function () {
+                paper.view.viewSize =
+                    new paper.Size($(window).width(), $(window).height());
+            });
 
 
             // x, y, radius, owner

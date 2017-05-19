@@ -11,46 +11,42 @@ var should = require('chai').should();
 
 import {
     getAttacks, newAttack, resetAttacks,
-    attackInProgress, nodesUnderAttack, nodeIsUnderAttack, reduceAttacksToValues, beginAttack, applyAttackCycle,
+    attackInProgress, nodesUnderAttack, nodeIsUnderAttack, reduceAttacksToValues, applyAttackCycle,
     nodeIsConquered, setNodeOwnerToWinner, removeAttacks
-} from '../gamerules'
+} from '../src/reducer'
 
 /* SCAFFOLDING */
 
+const GREEN = 0;
+const BLUE = 1;
+const RED = 2;
+
 var blue_node = {
     id: 1,
-    health: 0,
+    health: 30,
     size: 30,
-    owner: 1,
-    owner1health: 0,
-    owner2health: 0
+    owner: BLUE
 }
 
 var blue_node2 = {
     id: 4,
-    health: 0,
+    health: 50,
     size: 50,
-    owner: 1,
-    owner1health: 0,
-    owner2health: 0
+    owner: BLUE
 }
 
 var green_node = {
     id: 2,
-    health: 0,
+    health: 40,
     size: 40,
-    owner: 0,
-    owner1health: 0,
-    owner2health: 0
+    owner: GREEN
 }
 
 var red_node = {
     id: 3,
-    health: 0,
+    health: 40,
     size: 40,
-    owner: 2,
-    owner1health: 0,
-    owner2health: 0
+    owner: RED
 };
 
 var attacks1 = [
@@ -59,8 +55,8 @@ var attacks1 = [
 ];
 
 var attackValues1 = [
-    {attacker: 1, attackPower: 3}, // blue
-    {attacker: 2, attackPower: 4}  // red
+    {attackNode: blue_node, targetNode: green_node, attacker: BLUE, attackPower: 3}, // blue
+    {attackNode: red_node, targetNode: green_node, attacker: RED, attackPower: 4}  // red
 ];
 
 var attacks2 = [
@@ -70,8 +66,8 @@ var attacks2 = [
 ];
 
 var attackValues2 = [
-    {attacker: 1, attackPower: 8}, // blue
-    {attacker: 2, attackPower: 4}  // red
+    {attackNode: blue_node, targetNode: green_node, attacker: BLUE, attackPower: 8}, // blue
+    {attackNode: red_node, targetNode: green_node, attacker: RED, attackPower: 4}  // red
 ];
 
 var attacks3 = [
@@ -79,6 +75,12 @@ var attacks3 = [
     {attackNode: red_node, targetNode: green_node},
     {attackNode: blue_node2, targetNode: red_node}
 ];
+
+var attackValues3 = [
+    {attackNode: blue_node, targetNode: green_node, attacker: BLUE, attackPower: 3},
+    {attackNode: red_node, targetNode: green_node, attacker: RED, attackPower: 4},
+    {attackNode: blue_node2, targetNode: red_node, attacker: BLUE, attackPower: 5}
+]
 
 
 /* TESTS */
@@ -124,47 +126,56 @@ describe('Test removeAttacks', function () {
         newAttack(red_node, blue_node);
         removeAttacks(blue_node);
         expect(getAttacks()).to.deep.equal(
-            fromJS([
-                {attackNode: blue_node, targetNode: green_node}
-            ])
+            fromJS([{attackNode: blue_node, targetNode: green_node}])
         );
 
     });
-    // it("should not remove attacks if node not in the list", function () {
-    //     resetAttacks()
-    //     newAttack(blue_node, green_node);
-    //     newAttack(red_node, green_node);
-    //     removeAttacks(blue_node);
-    //     expect(getAttacks().to.deep.equal(attacks3));
-    // })
+    it("should not remove attacks if node not in the list", function () {
+        resetAttacks()
+        newAttack(blue_node, green_node);
+        newAttack(red_node, green_node);
+        removeAttacks(red_node);
+        expect(getAttacks()).to.deep.equal(fromJS(attacks1));
+    })
 })
+
+describe('Test attackInProgress', function () {
+    resetAttacks()
+    newAttack(blue_node, green_node);
+    newAttack(red_node, green_node);
+    it("should return true if attack and target nodes are in the attack list", function () {
+        expect(attackInProgress(blue_node, green_node)).to.equal(true);
+    });
+    it("should return false if attack and target nodes are not in the attack list", function () {
+        expect(attackInProgress(blue_node, red_node)).to.equal(false);
+    })
+});
+
+describe('Test nodesUnderAttack', function () {
+    resetAttacks()
+    newAttack(blue_node, green_node);
+    newAttack(red_node, green_node);
+
+    var nodeList = [green_node];
+
+    it("should return an array of nodes being attacked", function () {
+        expect(nodesUnderAttack()).to.deep.equal(fromJS(nodeList));
+    });
+
+    newAttack(blue_node, red_node);
+    var nodeList2 = [green_node, red_node];
+
+    it("should return two nodes if two nodes are under attack", function () {
+        expect(nodesUnderAttack()).to.deep.equal(nodeList2);
+    })
+});
+
 
 
 /*
  * OLD STUFF
  */
 
-describe('Test attackInProgress', function () {
-    it("should return true if attack and target nodes are in the attack list", function () {
-        expect(attackInProgress(attacks1, blue_node, green_node)).to.equal(true);
-    });
-    it("should return false if attack and target nodes are not in the attack list", function () {
-        expect(attackInProgress(attacks1, blue_node, red_node)).to.equal(false);
-    })
-});
-
-describe('Test nodesUnderAttack', function () {
-    var nodeList = [green_node];
-
-    it("should return an array of nodes being attacked", function () {
-        expect(nodesUnderAttack(attacks1)).to.deep.equal(nodeList);
-    });
-
-    var nodeList2 = [green_node, red_node];
-    it("should return two nodes if two nodes are under attack", function () {
-        expect(nodesUnderAttack(attacks3)).to.deep.equal(nodeList2);
-    })
-});
 
 describe('Test nodeIsUnderAttack', function () {
     it("should return true if node is in attack list", function () {
@@ -186,44 +197,22 @@ describe('Test reduceAttacksToValues', function () {
     })
 });
 
-// This is how the green_node should look when the attack1 begins
-var green_node_at_begin_attack = {
-    id: 2,
-    health: 0,
-    size: 40,
-    owner: 0,
-    owner1health: 40,
-    owner2health: 40
-}
-
-describe('Test beginAttack', function () {
-    it("should return target node with the owner healths to starting values", function () {
-        // newNode = beginAttack(node)
-        beginAttack(green_node).should.deep.equal(green_node_at_begin_attack);
-    })
-})
-
 // This is how the green node should look after one attack cycle (onFrame cycle)
 var green_node_after_one_cycle = {
     id: 2,
-    health: 0,
+    health: 39,
     size: 40,
-    owner: 0,
-    owner1health: 37,
-    owner2health: 36
+    owner: RED //red
 };
 
 describe('Test applyAttackCycle', function () {
     it("should adjust the node health based on the attack values", function () {
-        // newNode = applyAttackCycle(attackValues, node)
-        applyAttackCycle(attackValues1, green_node_at_begin_attack).should.deep.equal(green_node_after_one_cycle);
-        // TODO: What should the displayed node health be?
+        applyAttackCycle(attackValues1, green_node).should.deep.equal(green_node_after_one_cycle);
     })
     it("should handle compose with beginAttack()", function () {
         // newNode = applyAttackCycle(attackValues, node)
         var newNode = applyAttackCycle(attackValues2, beginAttack(green_node));
-        expect(newNode.owner1health).to.equal(32);
-        expect(newNode.owner2health).to.equal(36);
+        expect(newNode.health).to.equal(36);
     })
 })
 

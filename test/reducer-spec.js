@@ -1,87 +1,280 @@
 /**
- * Created by cameron on 2/19/17.
+ * Created by oliver on 5/3/17.
  */
 
 import {Map, List, fromJS} from 'immutable';
-import {expect} from 'chai';
+var chai = require('chai');
+var chaiImmutable = require('chai-immutable');
+chai.use(chaiImmutable);
+var expect = require('chai').expect;
+var should = require('chai').should();
 
-import reducer from '../src/reducer';
+import {
+    getAttacks, newAttack, resetAttacks,
+    attackInProgress, nodesUnderAttack, nodeIsUnderAttack, reduceAttacksToValues, applyAttackCycle,
+    nodeIsConquered, setNodeOwnerToWinner, removeAttacks
+} from '../src/reducer'
 
-/* Sample data */
-const network1 = {
-    nextId: 1,
-    nodes: [
-        {id: 1, size: 30, x: 100, y: 100},
-        {id: 2, size: 30, x: 300, y: 100}
-    ],
-    connections: [
-        {id: 5, node1:1, node2: 2}
-    ]
+/* SCAFFOLDING */
+
+const GREEN = 0;
+const BLUE = 1;
+const RED = 2;
+
+var blue_node = {
+    id: 1,
+    health: 30,
+    size: 30,
+    owner: BLUE
+}
+
+var blue_node2 = {
+    id: 4,
+    health: 50,
+    size: 50,
+    owner: BLUE
+}
+
+var green_node = {
+    id: 2,
+    health: 40,
+    size: 40,
+    owner: GREEN
+}
+
+var red_node = {
+    id: 3,
+    health: 40,
+    size: 40,
+    owner: RED
 };
-const node3 = {id: 3, defense: 100, attack: 10, r: 40, x: 500, y: 100 } ;
-const conn2 = {id: 6, node1: 2, node2: 3 };
-const network2 = {
-    nextId: 1,
-    nodes: [
-        {id: 1, size: 30, x: 100, y: 100},
-        {id: 2, size: 30, x: 300, y: 100},
-        {id: 3, defense: 100, attack: 10, size: 40, x: 500, y: 100, owner: 0 }
-    ],
-    connections: [
-        {id: 5, node1:1, node2: 2},
-        {id: 6, node1: 2, node2: 3 }
-    ]
-};
 
-describe('reducer', () => {
+var attacks1 = [
+    {attackNode: blue_node, targetNode: green_node},
+    {attackNode: red_node, targetNode: green_node}
+];
 
-    it('handles SET_NETWORK', () => {
-        const initialState = Map();
-        const action = {type: 'SET_NETWORK', network: network1};
-        const nextState = reducer(initialState, action);
-        expect(nextState).to.equal(fromJS(network1));
+var attackValues1 = [
+    {attackNode: blue_node, targetNode: green_node, attacker: BLUE, attackPower: 3}, // blue
+    {attackNode: red_node, targetNode: green_node, attacker: RED, attackPower: 4}  // red
+];
+
+var attacks2 = [
+    {attackNode: blue_node, targetNode: green_node},
+    {attackNode: red_node, targetNode: green_node},
+    {attackNode: blue_node2, targetNode: green_node}
+];
+
+var attackValues2 = [
+    {attackNode: blue_node, targetNode: green_node, attacker: BLUE, attackPower: 8}, // blue
+    {attackNode: red_node, targetNode: green_node, attacker: RED, attackPower: 4}  // red
+];
+
+var attacks3 = [
+    {attackNode: blue_node, targetNode: green_node},
+    {attackNode: red_node, targetNode: green_node},
+    {attackNode: blue_node2, targetNode: red_node}
+];
+
+var attackValues3 = [
+    {attackNode: blue_node, targetNode: green_node, attacker: BLUE, attackPower: 3},
+    {attackNode: red_node, targetNode: green_node, attacker: RED, attackPower: 4},
+    {attackNode: blue_node2, targetNode: red_node, attacker: BLUE, attackPower: 5}
+]
+
+
+/* TESTS */
+
+describe("newAttack action", function () {
+
+    it("should add a new attack", function () {
+        resetAttacks();
+        newAttack(blue_node, green_node);
+        newAttack(red_node, green_node);
+        getAttacks().should.deep.equal(
+            fromJS([
+                {attackNode: blue_node, targetNode: green_node},
+                {attackNode: red_node, targetNode: green_node}
+            ])
+        )
     })
 
-    it('handles ADD_NODE', () => {
-        const initialState = fromJS(network1);
-        const action = {type: 'ADD_NODE', node: node3};
-        const nextState = reducer(initialState, action);
-        expect(nextState.get('nodes')).to.equal(fromJS(network2).get('nodes'));
+    it("should work with just numbers", function () {
+        resetAttacks();
+        newAttack(1, 2);
+        newAttack(3, 2);
+        getAttacks().should.deep.equal(
+            fromJS([
+                {attackNode: 1, targetNode: 2},
+                {attackNode: 3, targetNode: 2}
+            ])
+        )
     })
+})
 
-    it('handles ADD_CONNECTION', () => {
-        const initialState =  fromJS(network1);
-        const action = {type: 'ADD_CONNECTION', connection: conn2 };
-        const nextState = reducer(initialState, action);
-        const expectedState = fromJS({
-            nextId: 1,
-            nodes: [
-                {id: 1, size: 30, x: 100, y: 100},
-                {id: 2, size: 30, x: 300, y: 100}
-            ],
-            connections: [
-                {id: 5, node1:1, node2: 2},
-                {id: 6, node1: 2, node2: 3 }
-            ]
-        })
-        expect(nextState).to.equal(expectedState);
+describe('resetAttacks', function () {
+    it("should empty the attacks list", function () {
+        resetAttacks()
+        expect(getAttacks()).to.be.empty;
     })
+})
 
-    it('has an initial state', () => {
-        const action = {type: 'SET_NETWORK', network: network1};
-        const nextState = reducer(undefined, action);
-        expect(nextState).to.equal(fromJS(network1));
+describe('Test removeAttacks', function () {
+    it("should remove all attacks for a given node", function () {
+        resetAttacks()
+        newAttack(blue_node, green_node);
+        newAttack(red_node, blue_node);
+        removeAttacks(blue_node);
+        expect(getAttacks()).to.deep.equal(
+            fromJS([{attackNode: blue_node, targetNode: green_node}])
+        );
+
+    });
+    it("should not remove attacks if node not in the list", function () {
+        resetAttacks()
+        newAttack(blue_node, green_node);
+        newAttack(red_node, green_node);
+        removeAttacks(red_node);
+        expect(getAttacks()).to.deep.equal(fromJS(attacks1));
     })
+})
 
-    it('can be used with reduce', () => {
-        const actions = [
-            {type: 'SET_NETWORK', network: network1},
-            {type: 'ADD_NODE', node: node3},
-            {type: 'ADD_CONNECTION', connection: conn2 }
-        ];
-        const finalState = actions.reduce(reducer, Map());
+describe('Test attackInProgress', function () {
+    resetAttacks()
+    newAttack(blue_node, green_node);
+    newAttack(red_node, green_node);
+    it("should return true if attack and target nodes are in the attack list", function () {
+        expect(attackInProgress(blue_node, green_node)).to.equal(true);
+    });
+    it("should return false if attack and target nodes are not in the attack list", function () {
+        expect(attackInProgress(blue_node, red_node)).to.equal(false);
+    })
+});
 
-        expect(finalState).to.equal(fromJS(network2));
+describe('Test nodesUnderAttack', function () {
+    resetAttacks()
+    newAttack(blue_node, green_node);
+    newAttack(red_node, green_node);
+    var nodeList = [green_node];
+
+    it("should return an array of nodes being attacked", function () {
+        expect(nodesUnderAttack()).to.deep.equal(fromJS(nodeList));
     });
 
+    it("should return two nodes if two nodes are under attack", function () {
+        newAttack(blue_node, red_node);
+        var nodeList2 = [green_node, red_node];
+        expect(attackInProgress(red_node, green_node)).to.equal(true);
+        expect(attackInProgress(blue_node, red_node)).to.equal(true);
+        expect(nodesUnderAttack()).to.deep.equal(fromJS(nodeList2));
+    })
 });
+
+describe('Test nodeIsUnderAttack', function () {
+    resetAttacks()
+    newAttack(blue_node, green_node);
+    newAttack(red_node, green_node);
+    var nodeList = [green_node];
+
+    it("should return true if node is in attack list", function () {
+        expect(nodeIsUnderAttack(green_node)).to.equal(true);
+    })
+    it("should return false if node is no in attack list", function () {
+        expect(nodeIsUnderAttack(blue_node)).to.equal(false);
+    })
+})
+
+
+/*
+ * OLD STUFF
+ */
+
+
+
+
+
+describe('Test reduceAttacksToValues', function () {
+    it("should reduce attacks to attack values per user", function () {
+        // attackValuesArray = reduceAttacksToValues(attacks)
+        reduceAttacksToValues(attacks1).should.deep.equal(attackValues1);
+    })
+    it("should reduce multiple user attacks to one attack value per user", function () {
+        reduceAttacksToValues(attacks2).should.deep.equal(attackValues2);
+    })
+});
+
+// This is how the green node should look after one attack cycle (onFrame cycle)
+var green_node_after_one_cycle = {
+    id: 2,
+    health: 39,
+    size: 40,
+    owner: RED //red
+};
+
+describe('Test applyAttackCycle', function () {
+    it("should adjust the node health based on the attack values", function () {
+        applyAttackCycle(attackValues1, green_node).should.deep.equal(green_node_after_one_cycle);
+    })
+    it("should handle compose with beginAttack()", function () {
+        // newNode = applyAttackCycle(attackValues, node)
+        var newNode = applyAttackCycle(attackValues2, beginAttack(green_node));
+        expect(newNode.health).to.equal(36);
+    })
+})
+
+// This is how the green node should look after one attack cycle (onFrame cycle)
+var green_node_conquered = {
+    id: 2,
+    health: 0,
+    size: 40,
+    owner: 0,
+    owner1health: 1,
+    owner2health: -1
+};
+
+describe('Test nodeIsConquered', function () {
+    it("should return true if a user has conquered the node", function () {
+        expect(nodeIsConquered(green_node_conquered)).to.equal(true);
+    })
+    it("should return false if healths are still positive", function () {
+        expect(nodeIsConquered(green_node_after_one_cycle)).to.equal(false);
+    })
+})
+
+
+describe('Test Everything', function () {
+    var attacks4 = [
+        {attackNode: blue_node, targetNode: green_node},
+        {attackNode: red_node, targetNode: green_node},
+        {attackNode: blue_node2, targetNode: red_node}
+    ];
+
+    // // This happens when a user attacks a node
+    // var node1 = beginAttack(green_node);
+    //
+    // // This happens for every OnFrame cycle
+    // nodesUnderAttack(attacks4).forEach((attackedNode) => {
+    //     while (nodeIsUnderAttack(attacks4, attackedNode)) {
+    //         if (nodeIsConquered(attackedNode)) {
+    //             setNodeOwnerToWinner(attackedNode)
+    //             attacks4 = removeAttacks(attacks4, attackedNode)
+    //         } else {
+    //             node1 = applyAttackCycle(reduceAttacksToValues(attacks4), attackedNode);
+    //         }
+    //     }
+    // });
+
+    // it("should set owner 2 as the new owner", function () {
+    //     expect(node1.owner).to.equal(2); //red
+    // })
+})
+
+
+
+
+
+
+
+
+
+

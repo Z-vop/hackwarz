@@ -1,6 +1,8 @@
 # hackwarz
 A game based on hacking and security.
 
+concepts/ -- directory for working out new ideas
+
 index.js -- Nodejs server for the back-end
 socketTest -- test page for socket messages
 

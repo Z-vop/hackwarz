@@ -24,63 +24,30 @@ const RED = 2;
 var blue_node = {
     id: 1,
     health: 30,
-    size: 30,
+    power: 3,
     owner: BLUE
 }
 
 var blue_node2 = {
     id: 4,
     health: 50,
-    size: 50,
+    power: 5,
     owner: BLUE
 }
 
 var green_node = {
     id: 2,
-    health: 40,
-    size: 40,
+    health: 0,
+    power: 4,
     owner: GREEN
 }
 
 var red_node = {
     id: 3,
-    health: 40,
-    size: 40,
+    health: 50,
+    power: 4,
     owner: RED
 };
-
-var attacks1 = [
-    {attackNode: blue_node, targetNode: green_node},
-    {attackNode: red_node, targetNode: green_node}
-];
-
-var attackValues1 = [
-    {attackNode: blue_node, targetNode: green_node, attacker: BLUE, attackPower: 3}, // blue
-    {attackNode: red_node, targetNode: green_node, attacker: RED, attackPower: 4}  // red
-];
-
-var attacks2 = [
-    {attackNode: blue_node, targetNode: green_node},
-    {attackNode: red_node, targetNode: green_node},
-    {attackNode: blue_node2, targetNode: green_node}
-];
-
-var attackValues2 = [
-    {attackNode: blue_node, targetNode: green_node, attacker: BLUE, attackPower: 8}, // blue
-    {attackNode: red_node, targetNode: green_node, attacker: RED, attackPower: 4}  // red
-];
-
-var attacks3 = [
-    {attackNode: blue_node, targetNode: green_node},
-    {attackNode: red_node, targetNode: green_node},
-    {attackNode: blue_node2, targetNode: red_node}
-];
-
-var attackValues3 = [
-    {attackNode: blue_node, targetNode: green_node, attacker: BLUE, attackPower: 3},
-    {attackNode: red_node, targetNode: green_node, attacker: RED, attackPower: 4},
-    {attackNode: blue_node2, targetNode: red_node, attacker: BLUE, attackPower: 5}
-]
 
 
 /* TESTS */
@@ -135,7 +102,12 @@ describe('Test removeAttacks', function () {
         newAttack(blue_node, green_node);
         newAttack(red_node, green_node);
         removeAttacks(red_node);
-        expect(getAttacks()).to.deep.equal(fromJS(attacks1));
+        expect(getAttacks()).to.deep.equal(
+            fromJS([
+                {attackNode: blue_node, targetNode: green_node},
+                {attackNode: red_node, targetNode: green_node}
+            ])
+        );
     })
 })
 
@@ -174,16 +146,62 @@ describe('Test nodeIsUnderAttack', function () {
     resetAttacks()
     newAttack(blue_node, green_node);
     newAttack(red_node, green_node);
-    var nodeList = [green_node];
 
     it("should return true if node is in attack list", function () {
         expect(nodeIsUnderAttack(green_node)).to.equal(true);
     })
-    it("should return false if node is no in attack list", function () {
+    it("should return false if node is not in attack list", function () {
         expect(nodeIsUnderAttack(blue_node)).to.equal(false);
     })
 })
 
+
+
+describe('Test reduceAttacksToValues', function () {
+
+    var attacks1 = fromJS([
+        {attackNode: blue_node, targetNode: green_node},
+        {attackNode: red_node, targetNode: green_node}
+    ]);
+
+    var attackValues1 = fromJS([
+        {target: green_node.id, attacker: BLUE, power: 3 },
+        {target: green_node.id, attacker: RED, power: 4 }
+    ]);
+
+    var attacks2 = fromJS([
+        {attackNode: blue_node, targetNode: green_node},
+        {attackNode: red_node, targetNode: green_node},
+        {attackNode: blue_node2, targetNode: green_node}
+    ]);
+
+    var attackValues2 = fromJS([
+        {target: green_node.id, attacker: BLUE, power: 8 },
+        {target: green_node.id, attacker: RED, power: 4 }
+    ]);
+
+    var attacks3 = fromJS([
+        {attackNode: blue_node, targetNode: green_node},
+        {attackNode: red_node, targetNode: green_node},
+        {attackNode: blue_node2, targetNode: red_node}
+    ]);
+
+    var attackValues3 = fromJS([
+        {target: green_node.id, attacker: BLUE, power: 3 },
+        {target: green_node.id, attacker: RED, power: 4 },
+        {target: red_node.id, attacker: BLUE, power: 5 }
+    ]);
+
+    it("should reduce attacks to attack values per user", function () {
+        reduceAttacksToValues(attacks1).should.deep.equal(attackValues1);
+    })
+    it("should reduce multiple user attacks to one attack value per user", function () {
+        reduceAttacksToValues(attacks2).should.deep.equal(attackValues2);
+    })
+    it("should compute attacks on multiple nodes", function () {
+        reduceAttacksToValues(attacks3).should.deep.equal(attackValues3);
+    })
+});
 
 /*
  * OLD STUFF
@@ -193,43 +211,40 @@ describe('Test nodeIsUnderAttack', function () {
 
 
 
-describe('Test reduceAttacksToValues', function () {
-    it("should reduce attacks to attack values per user", function () {
-        // attackValuesArray = reduceAttacksToValues(attacks)
-        reduceAttacksToValues(attacks1).should.deep.equal(attackValues1);
-    })
-    it("should reduce multiple user attacks to one attack value per user", function () {
-        reduceAttacksToValues(attacks2).should.deep.equal(attackValues2);
-    })
-});
-
-// This is how the green node should look after one attack cycle (onFrame cycle)
-var green_node_after_one_cycle = {
-    id: 2,
-    health: 39,
-    size: 40,
-    owner: RED //red
-};
-
 describe('Test applyAttackCycle', function () {
+
+    var attacks3 = fromJS([
+        {attackNode: blue_node, targetNode: green_node},
+        {attackNode: red_node, targetNode: green_node},
+        {attackNode: blue_node2, targetNode: red_node}
+    ]);
+
+    var attackValues3 = fromJS([
+        {target: green_node.id, attacker: BLUE, power: 3 },
+        {target: green_node.id, attacker: RED, power: 4 },
+        {target: red_node.id, attacker: BLUE, power: 5 }
+    ]);
+
+    // This is how the green node should look after one attack cycle (onFrame cycle)
+    var green_node_after_one_cycle = fromJS({
+        id: 2,
+        health: 1,
+        power: 4,
+        owner: RED //red
+    });
+
     it("should adjust the node health based on the attack values", function () {
-        applyAttackCycle(attackValues1, green_node).should.deep.equal(green_node_after_one_cycle);
+        applyAttackCycle(attackValues3, fromJS(green_node)).should.deep.equal(green_node_after_one_cycle);
     })
-    it("should handle compose with beginAttack()", function () {
-        // newNode = applyAttackCycle(attackValues, node)
-        var newNode = applyAttackCycle(attackValues2, beginAttack(green_node));
-        expect(newNode.health).to.equal(36);
-    })
+
 })
 
 // This is how the green node should look after one attack cycle (onFrame cycle)
 var green_node_conquered = {
     id: 2,
-    health: 0,
+    health: 40,
     size: 40,
-    owner: 0,
-    owner1health: 1,
-    owner2health: -1
+    owner: 0
 };
 
 describe('Test nodeIsConquered', function () {
@@ -249,19 +264,14 @@ describe('Test Everything', function () {
         {attackNode: blue_node2, targetNode: red_node}
     ];
 
-    // // This happens when a user attacks a node
-    // var node1 = beginAttack(green_node);
-    //
-    // // This happens for every OnFrame cycle
-    // nodesUnderAttack(attacks4).forEach((attackedNode) => {
-    //     while (nodeIsUnderAttack(attacks4, attackedNode)) {
-    //         if (nodeIsConquered(attackedNode)) {
-    //             setNodeOwnerToWinner(attackedNode)
-    //             attacks4 = removeAttacks(attacks4, attackedNode)
-    //         } else {
-    //             node1 = applyAttackCycle(reduceAttacksToValues(attacks4), attackedNode);
-    //         }
-    //     }
+    // var attackValues = reduceAttacksToValues(getAttacks())
+    // nodesUnderAttack().forEach((targetNode) => {
+    //     if (nodeIsConquered(targetNode)) {
+//             setNodeOwnerToWinner(targetNode)
+//             removeAttacks(targetNode)
+    //     } else {
+//             applyAttackCycle(attackValues, targetNode);
+//         }
     // });
 
     // it("should set owner 2 as the new owner", function () {

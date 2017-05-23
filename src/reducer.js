@@ -59,7 +59,7 @@ function reducer(state = INITIAL_STATE, action) {
             // get the attackList
             // remove were targetNode = action.node
             return state.update('attackList', attacks => attacks
-                .filter( (m) => m.getIn(['targetNode','id']) !== action.node.id )
+                .filter((m) => m.getIn(['targetNode', 'id']) !== action.node.id)
             );
     }
     return state;
@@ -81,7 +81,7 @@ function resetAttacks() {
 // Create a new attack
 function newAttack(attacker, target) {
     let newAttack = fromJS({attackNode: attacker, targetNode: target});
-    if(!store.getState().get('attackList').includes(newAttack)) {
+    if (!store.getState().get('attackList').includes(newAttack)) {
         store.dispatch({type: 'NEW_ATTACK', attack: newAttack});
     }
 }
@@ -94,8 +94,8 @@ function removeAttacks(node) {
 function attackInProgress(attacker, target) {
     if (getAttacks().size === 0) return false;
     return getAttacks()
-            .filter((a) => a.getIn(['attackNode','id']) === attacker.id)
-            .filter((a) => a.getIn(['targetNode','id']) === target.id)
+            .filter((a) => a.getIn(['attackNode', 'id']) === attacker.id)
+            .filter((a) => a.getIn(['targetNode', 'id']) === target.id)
             .size !== 0
 }
 
@@ -103,39 +103,72 @@ function attackInProgress(attacker, target) {
 function nodesUnderAttack() {
     return getAttacks().reduce((list, attack) => {
         let target = attack.get('targetNode');
-        return (!list.includes(target)) ? list.push(target) :  list;
+        return (!list.includes(target)) ? list.push(target) : list;
     }, List([]));
 }
 
 // Return true if node is being attacked
 function nodeIsUnderAttack(node) {
     return getAttacks().findIndex(
-            (attack) => (attack.getIn('targetNode','id') === node.id)
-        ) != -1
+        (attack) => (attack.getIn(['targetNode', 'id']) === node.id)
+    ) !== -1
 }
 
 
 /* OLD STYLE FUNCTIONS */
 
 
+function reduceAttacksToValues(attackList) {
 
-function reduceAttacksToValues(array) {
-    var attackValues = new Array(10).fill(0);
+    return attackList.reduce((list, attack) => {
+        let targetId = attack.getIn(['targetNode','id']);
+        let attackerId = attack.getIn(['attackNode', 'owner']);
+        let attackPower = attack.getIn(['attackNode', 'power']);
 
-    for (var n = 0; n < array.length; n++) {
-        var attackPower = array[n].attackNode.size / 10;
-        var attackOwner = array[n].attackNode.owner;
-        attackValues[attackOwner] += attackPower;
-    }
+        // Do we have an entry for this target/attacker combination?
+        let i = list.findIndex(
+            (av) => (av.get('target') === targetId && av.get('attacker') === attackerId)
+        );
 
-    return attackValues
-        .map((power, index) => ({attacker: index, attackPower: power}))
-        .filter((n) => (n.attackPower != 0))
+        // Add new attack value map or update existing map
+        if (i == -1){
+            return list.push(Map({
+                target: targetId,
+                attacker: attackerId,
+                power: attackPower
+            }))
+        } else {
+            return list.update(i, m => m.update('power', p => p + attackPower))
+        }
+    }, List([]))
+
 }
 
 function applyAttackCycle(attackValues, node) {
-    return node;
+    var h = node.get('health');
+    var oid = node.get('owner');
+
+    // apply one attack
+    function add_attack(a) {
+        var p = a.get('power');
+        var aid = a.get('attacker');
+
+        // If we own the node support it, otherwise attack it
+        oid == aid ? h += p : h -= p
+
+        // If the health drops below zero, switch owners
+        if( h < 0 ) { oid = aid; h = -h }
+    }
+
+    // get the attacks against this node, and apply each attack
+    attackValues
+        .filter((a) => a.get('target') === node.get('id'))
+        .forEach( a => add_attack(a) )
+
+    const node2 = node.set('owner', oid);
+    return node2.set('health', h)
 }
+
 
 function nodeIsConquered(node) {
     return node.owner1health <= 0 || node.owner2health <= 0;
@@ -146,10 +179,11 @@ function setNodeOwnerToWinner(node) {
 }
 
 
-
 export {
     getAttacks, newAttack, resetAttacks,
     attackInProgress, nodeIsUnderAttack, nodesUnderAttack, reduceAttacksToValues,
     applyAttackCycle,
     nodeIsConquered, setNodeOwnerToWinner, removeAttacks
 };
+
+

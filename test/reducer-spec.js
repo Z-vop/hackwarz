@@ -5,13 +5,16 @@ chai.use(chaiImmutable);
 import {expect, should} from 'chai'
 
 import makeStore from '../src/store';
-import { setNetwork, addNode, addConnection, getAttacks, resetAttacks, newAttack } from '../src/reducer'
+import {
+    setNetwork, addNode, addConnection, getAttacks, resetAttacks, newAttack, attackInProgress,
+    removeAttacks
+} from '../src/reducer'
 import * as C from './constants';
 
 describe('reducer network, node, connection actions', () => {
     const store = makeStore();
 
-    it("should set the network from a JS object", function() {
+    it("should set the network from a JS object", function () {
         store.dispatch(setNetwork(C.network1))
         expect(store.getState().get('nodes').size).to.equal(4)
     })
@@ -22,8 +25,8 @@ describe('reducer network, node, connection actions', () => {
     })
 
     it("should add connections", () => {
-        store.dispatch(addConnection( [ C.blue_node.id, C.blue_node2.id ] ))
-        store.dispatch(addConnection( [ C.blue_node2.id, C.green_node.id ] ))
+        store.dispatch(addConnection([C.blue_node.id, C.blue_node2.id]))
+        store.dispatch(addConnection([C.blue_node2.id, C.green_node.id]))
         expect(store.getState().get('connections').size).to.equal(2)
     })
 });
@@ -33,81 +36,83 @@ describe("reducer attack actions", () => {
     const store = makeStore();
     store.dispatch(setNetwork(C.network2))
 
-    it("should add a new attack", function () {
-        store.dispatch(resetAttacks());
-        store.dispatch(newAttack(C.blue_node.id, C.green_node.id));
-        store.dispatch(newAttack(C.red_node.id, C.green_node.id));
-        expect(getAttacks(store)).to.deep.equal(
-            fromJS([
-                {attackNode: C.blue_node.id, targetNode: C.green_node.id},
-                {attackNode: C.red_node.id, targetNode: C.green_node.id}
-            ])
-        )
+    describe("newAttack", () => {
+        it("newAttack should add a new attack", function () {
+            store.dispatch(resetAttacks());
+            if (!attackInProgress(store, C.blue_node.id, C.green_node.id)) {
+                store.dispatch(newAttack(C.blue_node.id, C.green_node.id))
+            }
+            if (!attackInProgress(store, C.red_node.id, C.green_node.id)) {
+                store.dispatch(newAttack(C.red_node.id, C.green_node.id))
+            }
+            expect(getAttacks(store)).to.deep.equal(
+                fromJS([
+                    {attackNode: C.blue_node.id, targetNode: C.green_node.id},
+                    {attackNode: C.red_node.id, targetNode: C.green_node.id}
+                ])
+            )
+        })
+        it("should work with just numbers", function () {
+            store.dispatch(resetAttacks());
+            store.dispatch(newAttack(1, 2));
+            store.dispatch(newAttack(3, 2));
+            expect(getAttacks(store)).to.deep.equal(
+                fromJS([
+                    {attackNode: 1, targetNode: 2},
+                    {attackNode: 3, targetNode: 2}
+                ])
+            )
+        })
+    })
+    describe('removeAttacks', function () {
+        it("should remove all attacks for a given node", function () {
+            store.dispatch(resetAttacks());
+            store.dispatch(newAttack(1, 2));
+            store.dispatch(newAttack(3, 4));
+
+            store.dispatch(removeAttacks(2));
+            expect(getAttacks(store)).to.deep.equal(
+                fromJS([{attackNode: 3, targetNode: 4}])
+            );
+
+        });
+        it("should not remove attacks if node not in the list", function () {
+            store.dispatch(newAttack(1, 2));
+            store.dispatch(removeAttacks(5));
+            expect(getAttacks(store)).to.deep.equal(
+                fromJS([
+                    {attackNode: 3, targetNode: 4},
+                    {attackNode: 1, targetNode: 2}
+                ])
+            );
+        })
+    })
+    describe('resetAttacks', function () {
+        it("should empty the attacks list", function () {
+            store.dispatch(resetAttacks());
+            expect(getAttacks(store)).to.be.empty;
+        })
     })
 })
 
+describe('Test selectors', () => {
+    describe('attackInProgress()', function () {
+        const store = makeStore();
+        store.dispatch(setNetwork(C.network2))
 
-//
-// describe("newAttack action", function () {
-//
+        store.dispatch(resetAttacks());
+        store.dispatch(newAttack(1, 2));
+        store.dispatch(newAttack(3, 2));
+        it("should return true if attack and target nodes are in the attack list", function () {
+            expect(attackInProgress(store, 1, 2)).to.equal(true);
+        });
+        it("should return false if attack and target nodes are not in the attack list", function () {
+            expect(attackInProgress(store, 3, 1)).to.equal(false);
+        })
+    });
+});
 
-//
-//     it("should work with just numbers", function () {
-//         resetAttacks();
-//         newAttack(1, 2);
-//         newAttack(3, 2);
-//         getAttacks().should.deep.equal(
-//             fromJS([
-//                 {attackNode: 1, targetNode: 2},
-//                 {attackNode: 3, targetNode: 2}
-//             ])
-//         )
-//     })
-// })
-//
-// describe('resetAttacks', function () {
-//     it("should empty the attacks list", function () {
-//         resetAttacks()
-//         expect(getAttacks()).to.be.empty;
-//     })
-// })
-//
-// describe('Test removeAttacks', function () {
-//     it("should remove all attacks for a given node", function () {
-//         resetAttacks()
-//         newAttack(blue_node, green_node);
-//         newAttack(red_node, blue_node);
-//         removeAttacks(blue_node);
-//         expect(getAttacks()).to.deep.equal(
-//             fromJS([{attackNode: blue_node, targetNode: green_node}])
-//         );
-//
-//     });
-//     it("should not remove attacks if node not in the list", function () {
-//         resetAttacks()
-//         newAttack(blue_node, green_node);
-//         newAttack(red_node, green_node);
-//         removeAttacks(red_node);
-//         expect(getAttacks()).to.deep.equal(
-//             fromJS([
-//                 {attackNode: blue_node, targetNode: green_node},
-//                 {attackNode: red_node, targetNode: green_node}
-//             ])
-//         );
-//     })
-// })
-//
-// describe('Test attackInProgress', function () {
-//     resetAttacks()
-//     newAttack(blue_node, green_node);
-//     newAttack(red_node, green_node);
-//     it("should return true if attack and target nodes are in the attack list", function () {
-//         expect(attackInProgress(blue_node, green_node)).to.equal(true);
-//     });
-//     it("should return false if attack and target nodes are not in the attack list", function () {
-//         expect(attackInProgress(blue_node, red_node)).to.equal(false);
-//     })
-// });
+
 //
 // describe('Test nodesUnderAttack', function () {
 //     resetAttacks()

@@ -36,6 +36,7 @@ export default function reducer(state = INITIAL_STATE, action) {
             return state.merge({connections: new_conns});
 
         case 'NEW_ATTACK':
+            // TODO: should we check that attack is not already in the list?
             return state.update('attackList',
                 list => list.push(action.attack)
             );
@@ -43,10 +44,8 @@ export default function reducer(state = INITIAL_STATE, action) {
             return state.set('attackList', new List());
 
         case 'REMOVE_ATTACKS':
-            // get the attackList
-            // remove were targetNode = action.node
-            return state.update('attackList', attacks => attacks
-                .filter((m) => m.getIn(['targetNode', 'id']) !== action.node.id)
+            return state.update('attackList', attacks =>
+                attacks.filter((m) => m.get('targetNode') !== action.nodeId)
             );
     }
     return state;
@@ -70,19 +69,24 @@ export function resetAttacks() {
     return {type: 'RESET_ATTACKS'}
 }
 
-
 // Create a new attack
-export function newAttack(attacker, target) {
-    let newAttack = fromJS({attackNode: attacker, targetNode: target})
+export function newAttack(attackerId, targetId) {
+    let newAttack = Attack(attackerId, targetId)
     return {type: 'NEW_ATTACK', attack: newAttack}
-    // if (!store.getState().get('attackList').includes(newAttack)) {
-    //     store.dispatch({type: 'NEW_ATTACK', attack: newAttack});
-    // }
 }
 
-// function removeAttacks(node) {
-//     store.dispatch({type: 'REMOVE_ATTACKS', node: node});
-// }
+export function removeAttacks(_nodeId) {
+    return {type: 'REMOVE_ATTACKS', nodeId: _nodeId};
+}
+
+
+/* UTILITY */
+
+export function Attack(attacker, target) {
+    return fromJS({attackNode: attacker, targetNode: target})
+}
+
+
 
 /* SELECTORS */
 
@@ -91,31 +95,26 @@ export function getAttacks(_store) {
     return _store.getState().get('attackList');
 }
 
+// Returns true if the attack and target Nodes are already in the attackList
+export function attackInProgress(_store, attackerId, targetId) {
+    var attacks = getAttacks(_store);
+    if (attacks.size === 0) return false;
+    return attacks.includes(Attack(attackerId, targetId));
+}
 
 
-
-//
-//
-// // Returns true if the attack and target Nodes are already in the attackList
-// function attackInProgress(attacker, target) {
-//     if (getAttacks().size === 0) return false;
-//     return getAttacks()
-//             .filter((a) => a.getIn(['attackNode', 'id']) === attacker.id)
-//             .filter((a) => a.getIn(['targetNode', 'id']) === target.id)
-//             .size !== 0
-// }
 //
 // // Return an array of nodes that are under attack
-// function nodesUnderAttack() {
-//     return getAttacks().reduce((list, attack) => {
+// export function nodesUnderAttack(_store) {
+//     return getAttacks(_store).reduce((list, attack) => {
 //         let target = attack.get('targetNode');
 //         return (!list.includes(target)) ? list.push(target) : list;
 //     }, List([]));
 // }
 //
 // // Return true if node is being attacked
-// function nodeIsUnderAttack(node) {
-//     return getAttacks().findIndex(
+// export function nodeIsUnderAttack(_store, node) {
+//     return getAttacks(_store).findIndex(
 //         (attack) => (attack.getIn(['targetNode', 'id']) === node.id)
 //     ) !== -1
 // }

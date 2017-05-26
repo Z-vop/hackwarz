@@ -31,12 +31,19 @@ export default function reducer(state = INITIAL_STATE, action) {
             const new_nodes = nodes.push(Map(node));
             return state.merge({nodes: new_nodes});
 
+        case 'SET_NODE_PROPS':
+            const nodeId = action.nodeProps.id
+            const nodeIndex = state.get('nodes').findIndex(
+                (node) => node.get('id') == nodeId)
+            return state.mergeDeepIn(['nodes', nodeIndex], action.nodeProps)
+
         case 'ADD_CONNECTION':
             const new_conns = state.get("connections").push(fromJS(action.connection));
             return state.merge({connections: new_conns});
 
         case 'NEW_ATTACK':
             // TODO: should we check that attack is not already in the list?
+            // TODO: Check that the attack is along a connection
             return state.update('attackList',
                 list => list.push(action.attack)
             );
@@ -45,7 +52,7 @@ export default function reducer(state = INITIAL_STATE, action) {
 
         case 'REMOVE_ATTACKS':
             return state.update('attackList', attacks =>
-                attacks.filter((m) => m.get('targetNode') !== action.nodeId)
+                attacks.filter((m) => m.get('targetNodeId') !== action.nodeId)
             );
     }
     return state;
@@ -61,6 +68,10 @@ export function addNode(_node) {
     return {type: 'ADD_NODE', node: _node}
 }
 
+export function setNodeProps(_np) {
+    return {type: 'SET_NODE_PROPS', nodeProps: _np}
+}
+
 export function addConnection(_conn) {
     return {type: 'ADD_CONNECTION', connection: _conn}
 }
@@ -69,7 +80,6 @@ export function resetAttacks() {
     return {type: 'RESET_ATTACKS'}
 }
 
-// Create a new attack
 export function newAttack(attackerId, targetId) {
     let newAttack = Attack(attackerId, targetId)
     return {type: 'NEW_ATTACK', attack: newAttack}
@@ -83,7 +93,7 @@ export function removeAttacks(_nodeId) {
 /* UTILITY */
 
 export function Attack(attacker, target) {
-    return fromJS({attackNode: attacker, targetNode: target})
+    return fromJS({attackNodeId: attacker, targetNodeId: target})
 }
 
 
@@ -102,20 +112,63 @@ export function attackInProgress(_store, attackerId, targetId) {
     return attacks.includes(Attack(attackerId, targetId));
 }
 
+export function getNode(_store, nodeId) {
+    return _store.getState()
+        .get('nodes')
+        .find( (node) => node.get('id') == nodeId )
+}
 
-//
-// // Return an array of nodes that are under attack
-// export function nodesUnderAttack(_store) {
-//     return getAttacks(_store).reduce((list, attack) => {
-//         let target = attack.get('targetNode');
-//         return (!list.includes(target)) ? list.push(target) : list;
-//     }, List([]));
-// }
-//
+// Return an array of nodes that are under attack
+export function nodesUnderAttack(_store) {
+    return getAttacks(_store).reduce((list, attack) => {
+        let target = attack.get('targetNodeId');
+        return (!list.includes(target)) ? list.push(target) : list;
+    }, List([]));
+}
+
+export function applyAttackCycle(_store, nodeId) {
+    var targetNode = getNode(_store, nodeId);
+    var health = targetNode.get('health');
+    var ownerId = targetNode.get('owner');
+    var size = targetNode.get('size');
+
+    // apply one attack
+    function apply_attack(a) {
+        var aNodeId = a.get('attackNodeId');
+        var power = getNode(_store, aNodeId).get('power');
+        var attackOwnerId = getNode(_store, aNodeId).get('owner');
+        // console.log("B health: " + health + " owner: " + ownerId + " attackOwnerId: " + attackOwnerId + " with: " + power);
+
+        // If we own the node support it, otherwise attack it
+        ownerId == attackOwnerId ? health += power : health -= power
+
+        // If the health drops below zero, switch owners and reverse the health
+        if( health < 0 ) { ownerId = attackOwnerId; health = -health }
+        // console.log("A health: " + health + " owner: " + ownerId );
+    }
+
+    // get the attacks against this node, and apply each attack
+    getAttacks(_store)
+        .filter((a) => a.get('targetNodeId') === targetNode.get('id'))
+        .forEach( (a) => apply_attack(a) )
+
+    // If the health goes above the size, cap it
+    // important: do it here and not for each attack or attack will never finish in some cases
+    if( health > size ) { health = size }
+
+
+    // Update store with results
+    _store.dispatch(setNodeProps({id: nodeId, owner: ownerId, health: health}))
+
+    // return true means that node is at full health (conquered)
+    return (health == size)
+}
+
+
 // // Return true if node is being attacked
 // export function nodeIsUnderAttack(_store, node) {
 //     return getAttacks(_store).findIndex(
-//         (attack) => (attack.getIn(['targetNode', 'id']) === node.id)
+//         (attack) => (attack.getIn(['targetNodeId', 'id']) === node.id)
 //     ) !== -1
 // }
 //
@@ -146,28 +199,4 @@ export function attackInProgress(_store, attackerId, targetId) {
 //
 // }
 //
-// export function applyAttackCycle(attackValues, node) {
-//     var h = node.get('health');
-//     var oid = node.get('owner');
-//
-//     // apply one attack
-//     function add_attack(a) {
-//         var p = a.get('power');
-//         var aid = a.get('attacker');
-//
-//         // If we own the node support it, otherwise attack it
-//         oid == aid ? h += p : h -= p
-//
-//         // If the health drops below zero, switch owners
-//         if( h < 0 ) { oid = aid; h = -h }
-//     }
-//
-//     // get the attacks against this node, and apply each attack
-//     attackValues
-//         .filter((a) => a.get('target') === node.get('id'))
-//         .forEach( a => add_attack(a) )
-//
-//     const node2 = node.set('owner', oid);
-//     return node2.set('health', h)
-// }
-//
+

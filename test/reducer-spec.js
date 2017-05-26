@@ -6,8 +6,9 @@ import {expect, should} from 'chai'
 
 import makeStore from '../src/store';
 import {
-    setNetwork, addNode, addConnection, getAttacks, resetAttacks, newAttack, attackInProgress,
-    removeAttacks
+    setNetwork, addNode, getNode, setNodeProps, addConnection,
+    getAttacks, resetAttacks, newAttack, attackInProgress,
+    removeAttacks, nodesUnderAttack, applyAttackCycle
 } from '../src/reducer'
 import * as C from './constants';
 
@@ -29,6 +30,17 @@ describe('reducer network, node, connection actions', () => {
         store.dispatch(addConnection([C.blue_node2.id, C.green_node.id]))
         expect(store.getState().get('connections').size).to.equal(2)
     })
+
+    it("should set node props", () => {
+        store.dispatch(setNodeProps({
+            id: 5,
+            health: 20,
+            owner: C.BLUE
+        }))
+        // console.log(store.getState().toJS());
+        expect(getNode(store, 5).get('owner')).to.equal(C.BLUE);
+        expect(getNode(store, 5).get('power')).to.equal(3);
+    })
 });
 
 
@@ -47,8 +59,8 @@ describe("reducer attack actions", () => {
             }
             expect(getAttacks(store)).to.deep.equal(
                 fromJS([
-                    {attackNode: C.blue_node.id, targetNode: C.green_node.id},
-                    {attackNode: C.red_node.id, targetNode: C.green_node.id}
+                    {attackNodeId: C.blue_node.id, targetNodeId: C.green_node.id},
+                    {attackNodeId: C.red_node.id, targetNodeId: C.green_node.id}
                 ])
             )
         })
@@ -58,8 +70,8 @@ describe("reducer attack actions", () => {
             store.dispatch(newAttack(3, 2));
             expect(getAttacks(store)).to.deep.equal(
                 fromJS([
-                    {attackNode: 1, targetNode: 2},
-                    {attackNode: 3, targetNode: 2}
+                    {attackNodeId: 1, targetNodeId: 2},
+                    {attackNodeId: 3, targetNodeId: 2}
                 ])
             )
         })
@@ -72,7 +84,7 @@ describe("reducer attack actions", () => {
 
             store.dispatch(removeAttacks(2));
             expect(getAttacks(store)).to.deep.equal(
-                fromJS([{attackNode: 3, targetNode: 4}])
+                fromJS([{attackNodeId: 3, targetNodeId: 4}])
             );
 
         });
@@ -81,8 +93,8 @@ describe("reducer attack actions", () => {
             store.dispatch(removeAttacks(5));
             expect(getAttacks(store)).to.deep.equal(
                 fromJS([
-                    {attackNode: 3, targetNode: 4},
-                    {attackNode: 1, targetNode: 2}
+                    {attackNodeId: 3, targetNodeId: 4},
+                    {attackNodeId: 1, targetNodeId: 2}
                 ])
             );
         })
@@ -101,142 +113,71 @@ describe('Test selectors', () => {
         store.dispatch(setNetwork(C.network2))
 
         store.dispatch(resetAttacks());
-        store.dispatch(newAttack(1, 2));
+        store.dispatch(newAttack(4, 2));
         store.dispatch(newAttack(3, 2));
         it("should return true if attack and target nodes are in the attack list", function () {
-            expect(attackInProgress(store, 1, 2)).to.equal(true);
+            expect(attackInProgress(store, 4, 2)).to.equal(true);
         });
         it("should return false if attack and target nodes are not in the attack list", function () {
-            expect(attackInProgress(store, 3, 1)).to.equal(false);
+            expect(attackInProgress(store, 2, 4)).to.equal(false);
+        })
+    });
+
+    describe('getNode()', function() {
+        const store = makeStore()
+        store.dispatch(setNetwork(C.network2))
+        it('should return the correct node given the nodeId value', function() {
+            expect(getNode(store, 2)).to.deep.equal(fromJS(C.green_node))
+        })
+    })
+
+    describe('nodesUnderAttack()', function () {
+        const store = makeStore();
+        store.dispatch(setNetwork(C.network2))
+
+        store.dispatch(resetAttacks());
+        store.dispatch(newAttack(4, 2));
+        store.dispatch(newAttack(3, 2));
+
+
+        it("should return an array of nodes being attacked", function () {
+            expect(nodesUnderAttack(store)).to.deep.equal(fromJS([2]));
+        });
+
+        it("should return two nodes if two nodes are under attack", function () {
+            store.dispatch(newAttack(1,3));
+            expect(nodesUnderAttack(store)).to.deep.equal(fromJS([2,3]));
         })
     });
 });
 
+describe('Test applyAttackCycle', function () {
+    const store = makeStore();
+    store.dispatch(setNetwork(C.network2))
 
+    store.dispatch(resetAttacks());
+    store.dispatch(newAttack(C.blue_node2.id, C.green_node.id));
+    store.dispatch(newAttack(C.red_node.id, C.green_node.id));
+
+    it("should adjust the node health based on the attack values", () => {
+        const newHealth = Math.abs(Math.abs(C.green_node.health - C.red_node.power) - C.blue_node2.power)
+        const attackChangedOwnership = applyAttackCycle(store, 2)
+        expect(attackChangedOwnership).to.equal(false);
+        expect(getNode(store, C.green_node.id).get('health')).to.equal(newHealth);
+    })
+
+    it("should return true when strongest attack prevails", () => {
+        while(!applyAttackCycle(store, 2)) {
+            expect(getNode(store, 2).get('health')).to.be.below(C.green_node.size);
+        }
+        expect(getNode(store, C.green_node.id).get('owner')).to
+            .equal((C.red_node.power-C.blue_node2.power) > 0 ? C.RED : C.BLUE);
+        expect(getNode(store, C.green_node.id).get('power')).to.equal(C.green_node.power);
+    })
+
+})
 //
-// describe('Test nodesUnderAttack', function () {
-//     resetAttacks()
-//     newAttack(blue_node, green_node);
-//     newAttack(red_node, green_node);
-//     var nodeList = [green_node];
-//
-//     it("should return an array of nodes being attacked", function () {
-//         expect(nodesUnderAttack()).to.deep.equal(fromJS(nodeList));
-//     });
-//
-//     it("should return two nodes if two nodes are under attack", function () {
-//         newAttack(blue_node, red_node);
-//         var nodeList2 = [green_node, red_node];
-//         expect(attackInProgress(red_node, green_node)).to.equal(true);
-//         expect(attackInProgress(blue_node, red_node)).to.equal(true);
-//         expect(nodesUnderAttack()).to.deep.equal(fromJS(nodeList2));
-//     })
-// });
-//
-// describe('Test nodeIsUnderAttack', function () {
-//     resetAttacks()
-//     newAttack(blue_node, green_node);
-//     newAttack(red_node, green_node);
-//
-//     it("should return true if node is in attack list", function () {
-//         expect(nodeIsUnderAttack(green_node)).to.equal(true);
-//     })
-//     it("should return false if node is not in attack list", function () {
-//         expect(nodeIsUnderAttack(blue_node)).to.equal(false);
-//     })
-// })
-//
-//
-//
-// describe('Test reduceAttacksToValues', function () {
-//
-//     var attacks1 = fromJS([
-//         {attackNode: blue_node, targetNode: green_node},
-//         {attackNode: red_node, targetNode: green_node}
-//     ]);
-//
-//     var attackValues1 = fromJS([
-//         {target: green_node.id, attacker: BLUE, power: 3 },
-//         {target: green_node.id, attacker: RED, power: 4 }
-//     ]);
-//
-//     var attacks2 = fromJS([
-//         {attackNode: blue_node, targetNode: green_node},
-//         {attackNode: red_node, targetNode: green_node},
-//         {attackNode: blue_node2, targetNode: green_node}
-//     ]);
-//
-//     var attackValues2 = fromJS([
-//         {target: green_node.id, attacker: BLUE, power: 8 },
-//         {target: green_node.id, attacker: RED, power: 4 }
-//     ]);
-//
-//     var attacks3 = fromJS([
-//         {attackNode: blue_node, targetNode: green_node},
-//         {attackNode: red_node, targetNode: green_node},
-//         {attackNode: blue_node2, targetNode: red_node}
-//     ]);
-//
-//     var attackValues3 = fromJS([
-//         {target: green_node.id, attacker: BLUE, power: 3 },
-//         {target: green_node.id, attacker: RED, power: 4 },
-//         {target: red_node.id, attacker: BLUE, power: 5 }
-//     ]);
-//
-//     it("should reduce attacks to attack values per user", function () {
-//         reduceAttacksToValues(attacks1).should.deep.equal(attackValues1);
-//     })
-//     it("should reduce multiple user attacks to one attack value per user", function () {
-//         reduceAttacksToValues(attacks2).should.deep.equal(attackValues2);
-//     })
-//     it("should compute attacks on multiple nodes", function () {
-//         reduceAttacksToValues(attacks3).should.deep.equal(attackValues3);
-//     })
-// });
-//
-// /*
-//  * OLD STUFF
-//  */
-//
-//
-//
-//
-//
-// describe('Test applyAttackCycle', function () {
-//
-//     var attacks3 = fromJS([
-//         {attackNode: blue_node, targetNode: green_node},
-//         {attackNode: red_node, targetNode: green_node},
-//         {attackNode: blue_node2, targetNode: red_node}
-//     ]);
-//
-//     var attackValues3 = fromJS([
-//         {target: green_node.id, attacker: BLUE, power: 3 },
-//         {target: green_node.id, attacker: RED, power: 4 },
-//         {target: red_node.id, attacker: BLUE, power: 5 }
-//     ]);
-//
-//     // This is how the green node should look after one attack cycle (onFrame cycle)
-//     var green_node_after_one_cycle = fromJS({
-//         id: 2,
-//         health: 1,
-//         power: 4,
-//         owner: RED //red
-//     });
-//
-//     it("should adjust the node health based on the attack values", function () {
-//         applyAttackCycle(attackValues3, fromJS(green_node)).should.deep.equal(green_node_after_one_cycle);
-//     })
-//
-// })
-//
-// // This is how the green node should look after one attack cycle (onFrame cycle)
-// var green_node_conquered = {
-//     id: 2,
-//     health: 40,
-//     size: 40,
-//     owner: 0
-// };
+
 //
 // describe('Test nodeIsConquered', function () {
 //     it("should return true if a user has conquered the node", function () {
@@ -249,19 +190,17 @@ describe('Test selectors', () => {
 //
 //
 // describe('Test Everything', function () {
-//     var attacks4 = [
-//         {attackNode: blue_node, targetNode: green_node},
-//         {attackNode: red_node, targetNode: green_node},
-//         {attackNode: blue_node2, targetNode: red_node}
-//     ];
+//     const store = makeStore();
+//     store.dispatch(setNetwork(C.network2))
 //
-//     var attackValues = reduceAttacksToValues(getAttacks())
-//     nodesUnderAttack().forEach((targetNode) => {
-//         if (nodeIsConquered(targetNode)) {
-//             setNodeOwnerToWinner(targetNode)
-//             removeAttacks(targetNode)
-//         } else {
-//             applyAttackCycle(attackValues, targetNode);
+//     store.dispatch(resetAttacks());
+//     store.dispatch(newAttack(4, 2));
+//     store.dispatch(newAttack(3, 2));
+//
+//
+//     nodesUnderAttack(store).forEach( (targetNodeId) => {
+//         if(applyAttackCycle(store, targetNodeId)) {
+//             removeAttacks(store, targetNodeId)
 //         }
 //     });
 //

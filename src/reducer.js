@@ -127,76 +127,33 @@ export function nodesUnderAttack(_store) {
 }
 
 export function applyAttackCycle(_store, nodeId) {
-    var targetNode = getNode(_store, nodeId);
-    var health = targetNode.get('health');
-    var ownerId = targetNode.get('owner');
-    var size = targetNode.get('size');
+    var t = getNode(_store, nodeId).toJS(); // targetNode
 
-    // apply one attack
-    function apply_attack(a) {
-        var aNodeId = a.get('attackNodeId');
-        var power = getNode(_store, aNodeId).get('power');
-        var attackOwnerId = getNode(_store, aNodeId).get('owner');
-        // console.log("B health: " + health + " owner: " + ownerId + " attackOwnerId: " + attackOwnerId + " with: " + power);
+    function apply_attack(attack) {  // apply one attack
+        var a = getNode(_store, attack.get('attackNodeId')).toJS(); // attackingNode
+        // console.log("1 node: " + nodeId + " health: " + health + " owner: " + ownerId + " attackOwnerId: " + attackOwnerId + " with: " + power);
 
         // If we own the node support it, otherwise attack it
-        ownerId == attackOwnerId ? health += power : health -= power
+        t.owner === a.owner ? t.health += a.power : t.health -= a.power
 
         // If the health drops below zero, switch owners and reverse the health
-        if( health < 0 ) { ownerId = attackOwnerId; health = -health }
-        // console.log("A health: " + health + " owner: " + ownerId );
+        if( t.health < 0 ) { t.owner = a.owner; t.health = -t.health }
+        // console.log("2 node: " + nodeId + " health: " + health + " owner: " + ownerId );
+        // console.log(" ");
     }
 
     // get the attacks against this node, and apply each attack
     getAttacks(_store)
-        .filter((a) => a.get('targetNodeId') === targetNode.get('id'))
+        .filter((attack) => attack.get('targetNodeId') === t.id)
         .forEach( (a) => apply_attack(a) )
 
     // If the health goes above the size, cap it
     // important: do it here and not for each attack or attack will never finish in some cases
-    if( health > size ) { health = size }
-
+    if( t.health > t.size ) { t.health = t.size }
 
     // Update store with results
-    _store.dispatch(setNodeProps({id: nodeId, owner: ownerId, health: health}))
+    _store.dispatch(setNodeProps({id: t.id, owner: t.owner, health: t.health}))
 
     // return true means that node is at full health (conquered)
-    return (health == size)
+    return (t.health === t.size)
 }
-
-
-// // Return true if node is being attacked
-// export function nodeIsUnderAttack(_store, node) {
-//     return getAttacks(_store).findIndex(
-//         (attack) => (attack.getIn(['targetNodeId', 'id']) === node.id)
-//     ) !== -1
-// }
-//
-//
-// export function reduceAttacksToValues(attackList) {
-//
-//     return attackList.reduce((list, attack) => {
-//         let targetId = attack.getIn(['targetNode','id']);
-//         let attackerId = attack.getIn(['attackNode', 'owner']);
-//         let attackPower = attack.getIn(['attackNode', 'power']);
-//
-//         // Do we have an entry for this target/attacker combination?
-//         let i = list.findIndex(
-//             (av) => (av.get('target') === targetId && av.get('attacker') === attackerId)
-//         );
-//
-//         // Add new attack value map or update existing map
-//         if (i == -1){
-//             return list.push(Map({
-//                 target: targetId,
-//                 attacker: attackerId,
-//                 power: attackPower
-//             }))
-//         } else {
-//             return list.update(i, m => m.update('power', p => p + attackPower))
-//         }
-//     }, List([]))
-//
-// }
-//
-

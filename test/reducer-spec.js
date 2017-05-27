@@ -37,7 +37,6 @@ describe('reducer network, node, connection actions', () => {
             health: 20,
             owner: C.BLUE
         }))
-        // console.log(store.getState().toJS());
         expect(getNode(store, 5).get('owner')).to.equal(C.BLUE);
         expect(getNode(store, 5).get('power')).to.equal(3);
     })
@@ -151,7 +150,7 @@ describe('Test selectors', () => {
     });
 });
 
-describe('Test applyAttackCycle', function () {
+describe('Applying one attack cycle', function () {
     const store = makeStore();
     store.dispatch(setNetwork(C.network2))
 
@@ -159,56 +158,53 @@ describe('Test applyAttackCycle', function () {
     store.dispatch(newAttack(C.blue_node2.id, C.green_node.id));
     store.dispatch(newAttack(C.red_node.id, C.green_node.id));
 
-    it("should adjust the node health based on the attack values", () => {
+    it("should correctly adjust the node health based on the attack values", () => {
         const newHealth = Math.abs(Math.abs(C.green_node.health - C.red_node.power) - C.blue_node2.power)
-        const attackChangedOwnership = applyAttackCycle(store, 2)
-        expect(attackChangedOwnership).to.equal(false);
+        const healthAtFull = applyAttackCycle(store, C.green_node.id)
+        expect(healthAtFull).to.equal(false);
         expect(getNode(store, C.green_node.id).get('health')).to.equal(newHealth);
     })
 
-    it("should return true when strongest attack prevails", () => {
-        while(!applyAttackCycle(store, 2)) {
+    it("should return false when the health is less than full", () => {
+        expect(applyAttackCycle(store, C.green_node.id)).to.equal(false);
+    })
+
+    it("should return true when health is full", () => {
+        while(!applyAttackCycle(store, C.green_node.id)) {
             expect(getNode(store, 2).get('health')).to.be.below(C.green_node.size);
         }
+    })
+
+    it("should leave the node with the correct owner and make no other changes", () => {
         expect(getNode(store, C.green_node.id).get('owner')).to
             .equal((C.red_node.power-C.blue_node2.power) > 0 ? C.RED : C.BLUE);
         expect(getNode(store, C.green_node.id).get('power')).to.equal(C.green_node.power);
     })
-
 })
-//
 
-//
-// describe('Test nodeIsConquered', function () {
-//     it("should return true if a user has conquered the node", function () {
-//         expect(nodeIsConquered(green_node_conquered)).to.equal(true);
-//     })
-//     it("should return false if healths are still positive", function () {
-//         expect(nodeIsConquered(green_node_after_one_cycle)).to.equal(false);
-//     })
-// })
-//
-//
-// describe('Test Everything', function () {
-//     const store = makeStore();
-//     store.dispatch(setNetwork(C.network2))
-//
-//     store.dispatch(resetAttacks());
-//     store.dispatch(newAttack(4, 2));
-//     store.dispatch(newAttack(3, 2));
-//
-//
-//     nodesUnderAttack(store).forEach( (targetNodeId) => {
-//         if(applyAttackCycle(store, targetNodeId)) {
-//             removeAttacks(store, targetNodeId)
-//         }
-//     });
-//
-//     it("should set owner 2 as the new owner", function () {
-//         expect(node1.owner).to.equal(2); //red
-//     })
-// })
-//
+
+describe('Cycling multiple attacks until no more attacks', function () {
+    const store = makeStore();
+    store.dispatch(setNetwork(C.network2))
+
+    store.dispatch(resetAttacks());
+    store.dispatch(newAttack(C.blue_node2.id, C.green_node.id));
+    store.dispatch(newAttack(C.red_node.id, C.green_node.id));
+    store.dispatch(newAttack(C.red_node.id, C.blue_node.id));
+
+    while(nodesUnderAttack(store).size != 0) {  // onFrame
+        nodesUnderAttack(store).forEach((targetNodeId) => {
+            if (applyAttackCycle(store, targetNodeId)) {
+                store.dispatch(removeAttacks(targetNodeId))
+            }
+        })
+    }
+
+    it("should remove all attacks", function () {
+        expect(nodesUnderAttack(store).size).to.equal(0)
+    })
+})
+
 
 
 

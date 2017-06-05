@@ -1,23 +1,6 @@
 import {fromJS, List, Map} from 'immutable';
 import {createStore} from 'redux';
-
-const INITIAL_STATE = fromJS({
-    nodes: [],
-    connections: [],
-    attackList: [],
-    users: []
-});
-
-const DEFAULT_NODE = fromJS({
-    id: 0,
-    size: 30,
-    health: 0,
-    power: 3,
-    owner: 0,
-    x: 100,
-    y: 100,
-    r: 30
-});
+import { INITIAL_STATE, DEFAULT_NODE } from "./constants"
 
 export default function reducer(state = INITIAL_STATE, action) {
 

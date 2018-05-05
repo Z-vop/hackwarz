@@ -18,12 +18,6 @@ var Mission = require('./lib/Mission');
 // When a user connects, everything in this function is called per user/socket
 io.on('connection', function(socket){
 
-    // TODO: Not sure what we are going to do here
-    var firewall = {
-        virus:"virus protection: 87%",
-        trojan:"trojan seeker: 62%"
-    };
-
     // Instance variables
     var isLoggedIn = false; // After the user has logged in, this is true
     var user = null;        // Holds the User object
@@ -42,8 +36,8 @@ io.on('connection', function(socket){
         // Don't allow user to continue until they identify themselves
         if(!isLoggedIn) {
 
-            // The /name command allows a user to log in
-            if (msg.startsWith('/name ') || msg.startsWith('/user ')) {
+            // The /user command allows a user to log in
+            if (msg.startsWith('/login ') || msg.startsWith('/user ')) {
                 // Extract and validate the entered user name
                 var u = (msg.substring(msg.indexOf(" ")+1));
                 /* Username must be one or more letters and numbers */
@@ -102,13 +96,6 @@ io.on('connection', function(socket){
                 socket.emit("chat_message", "/mission                   Describe current mission");
                 socket.emit("chat_message", "/password new_password     Change your password");
                 socket.emit("chat_message", "/help                      Print this message");
-            }
-
-            if(msg.startsWith('/firewall')){
-                socket.emit("chat_message", firewall.virus);
-                socket.emit("chat_message", firewall.bruteforce);
-                socket.emit("chat_message", firewall.trojan);
-                socket.emit("chat_message", firewall.ddos);
             }
 
         } else {
